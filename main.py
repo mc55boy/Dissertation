@@ -2,6 +2,7 @@ import tensorflow as tf
 from tensorflow.examples.tutorials.mnist import input_data
 mnist = input_data.read_data_sets("MNIT_data/", one_hot=True)
 
+
 x = tf.placeholder(tf.float32, [None, 784]) #[None, 784] means a no dimensions and 784 points
 W = tf.Variable(tf.zeros([784,10]))
 b = tf.Variable(tf.zeros([10]))
@@ -18,9 +19,20 @@ init = tf.global_variables_initializer()
 sess = tf.Session()
 sess.run(init)
 
-for i in range(1000):
+saver = tf.train.Saver()
+
+iterations = 1000
+
+print("Training Model...")
+for i in range(iterations):
+    percent = i / (iterations / 100)
+    print(str.format('{0:.2f}', percent) + "% done \r", sep=' ', end='', flush=True)
+    #print("%d complete\r" % percent),
     batch_xs, batch_ys = mnist.train.next_batch(100)
     sess.run(train_step, feed_dict={x: batch_xs, y_: batch_ys})
+print("Model Trained!")
+save_path = saver.save(sess, "Models/model.ckpt")
+print("Model saved in path: %s" % save_path)
 
 correct_prediction = tf.equal(tf.argmax(y,1), tf.argmax(y_,1))
 
