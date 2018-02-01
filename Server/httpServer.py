@@ -13,8 +13,8 @@ class MyHandler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         paths = {
-            '/foo': {'status': 200},
-            '/bar': {'status': 302},
+            '/getData': {'status': 200},
+            '/getModel': {'status': 200},
             '/baz': {'status': 404},
             '/qux': {'status': 500}
         }
@@ -37,6 +37,8 @@ class MyHandler(BaseHTTPRequestHandler):
         return bytes(content, 'UTF-8')
 
     def respond(self, opts):
+        if self.path == '/getData':
+            print("Sending Data")
         response = self.handle_http(opts['status'], self.path)
         self.wfile.write(response)
 
