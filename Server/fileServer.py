@@ -5,21 +5,40 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 
 class MyHandler(BaseHTTPRequestHandler):
 
+    def handle_http(self, status_code, path):
+        self.send_response(status_code)
+        self.send_header('Content-type', 'text/html')
+        self.end_headers()
+        content = 'MNIST_data'.format(path)
+        return bytes(content, 'UTF-8')
+
+    def respond(self, opts):
+        response = self.handle_http(opts['status'], self.path)
+        self.wfile.write(response)
+
     def do_GET(self):
-        try:
-            #if self.path.endswith(".html"):
-            f = open(curdir + sep + self.path, 'rb') #self.path has /test.html
-#note that this potentially makes every file on your computer readable by the internet
+        paths = {
+            '/getDataset': {'status': 200},
+            '/getModel': {'status': 200}
+        }
 
-            self.send_response(200)
-            self.send_header('Content-type',    'text/html')
-            self.end_headers()
-            self.wfile.write(f.read())
-            f.close()
-            return
+        if self.path in paths:
+            #Serve GET request
+            self.respond(paths[self.path])
+        else:
+            #Serve file
+            try:
+                #if self.path.endswith(".html"):
+                f = open(curdir + sep + self.path, 'rb')
+                self.send_response(200)
+                self.send_header('Content-type',    'text/html')
+                self.end_headers()
+                self.wfile.write(f.read())
+                f.close()
+                return
 
-        except IOError:
-            self.send_error(404,'File Not Found: %s' % self.path)
+            except IOError:
+                self.send_error(404,'File Not Found: %s' % self.path)
 
 
 def main():

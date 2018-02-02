@@ -6,19 +6,22 @@ import tarfile
 
 #netServices.neuralNet.multilayerTrain()
 
+def downloadData(datasetName):
+    print("Downloading Data...")
+    HTTPServices.HTTPHandler.requestData()
+    print("Data downloaded")
+    print("Extracting files...")
+    tar = tarfile.open("Data/" + datasetName + ".tar.gz")
+    tar.extractall(path="Data/")
+    tar.close()
+    os.remove("Data/" + datasetName + ".tar.gz")
+    print("Data Extracted")
 
 def setup():
-    problemData = "MNIST_data"
-    if not os.path.exists("Data/" + problemData):
-        print("Downloading Data...")
-        HTTPServices.HTTPHandler.requestData()
-        print("Data downloaded")
-        print("Extracting files...")
-        tar = tarfile.open("Data/MNIST.tar.gz")
-        tar.extractall(path="Data/")
-        tar.close()
-        os.remove("Data/MNIST.tar.gz")
-        print("Data Extracted")
-    else:
-        print("Data Exists")
+    datasetName = HTTPServices.HTTPHandler.whichDataset()
+    if not os.path.exists("Data/" + datasetName):
+        downloadData(datasetName)
+
+    
+
 setup()

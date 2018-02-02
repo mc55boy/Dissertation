@@ -20,17 +20,11 @@ class MyHandler(BaseHTTPRequestHandler):
             '/qux': {'status': 500}
         }
 
-        if self.path == '/Data/MNIST.tar.gz':
-            self.sendDataFile(paths[self.path])
-        elif self.path in paths:
+        if self.path in paths:
             self.respond(paths[self.path])
         else:
             self.respond({'status': 500})
 
-    def sendDataFile(self, opts):
-        self.send_response(opts['status'])
-        self.send_header('Content-type', 'application/x-tar')
-        self.end_headers()
 
     def handle_http(self, status_code, path):
         self.send_response(status_code)
@@ -45,8 +39,6 @@ class MyHandler(BaseHTTPRequestHandler):
         return bytes(content, 'UTF-8')
 
     def respond(self, opts):
-        if self.path == '/getData':
-            print("Sending Data")
         response = self.handle_http(opts['status'], self.path)
         self.wfile.write(response)
 
