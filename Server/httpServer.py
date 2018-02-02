@@ -15,14 +15,22 @@ class MyHandler(BaseHTTPRequestHandler):
         paths = {
             '/getData': {'status': 200},
             '/getModel': {'status': 200},
+            '/Data/MNIST.tar.gz': {'status': 200},
             '/baz': {'status': 404},
             '/qux': {'status': 500}
         }
 
-        if self.path in paths:
+        if self.path == '/Data/MNIST.tar.gz':
+            self.sendDataFile(paths[self.path])
+        elif self.path in paths:
             self.respond(paths[self.path])
         else:
             self.respond({'status': 500})
+
+    def sendDataFile(self, opts):
+        self.send_response(opts['status'])
+        self.send_header('Content-type', 'application/x-tar')
+        self.end_headers()
 
     def handle_http(self, status_code, path):
         self.send_response(status_code)
