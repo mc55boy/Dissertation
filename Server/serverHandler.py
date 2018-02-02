@@ -5,26 +5,17 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 
 class MyHandler(BaseHTTPRequestHandler):
 
-    def handle_http(self, status_code, path):
-        self.send_response(status_code)
-        self.send_header('Content-type', 'text/html')
-        self.end_headers()
-        content = 'MNIST_data'.format(path)
-        return bytes(content, 'UTF-8')
-
-    def respond(self, opts):
-        response = self.handle_http(opts['status'], self.path)
-        self.wfile.write(response)
 
     def _set_response(self, opts): #This is just a duplicate of handle_http. rewrite this to handle both
         self.send_response(opts['status'])
         self.send_header('Content-type', 'text/html')
         self.end_headers()
+        content = opts['response'].format(self.path)
+        self.wfile.write(bytes(content, 'utf-8'))
 
     def do_POST(self):
-
         paths = {
-            '/registerClient': {'status': 200},
+            '/registerClient': {'status': 200, 'response': 'hello'},
         }
 
         if self.path in paths:
@@ -33,34 +24,30 @@ class MyHandler(BaseHTTPRequestHandler):
             post_data = self.rfile.read(content_length)
             print(post_data.decode('utf-8'))
             self._set_response(paths[self.path])
-            self.wfile.write("POST request {}".format(self.path).encode('utf-8'))
+            #self.wfile.write("POST request {}".format(self.path).encode('utf-8'))
         else:
             self._set_response({'status': 404})
-            self.wfile.write("POST request {}".format(self.path).encode('utf-8'))
-
-
-
-
+            #self.wfile.write("POST request {}".format(self.path).encode('utf-8'))
 
     def do_GET(self):
         paths = {
-            '/getDataset': {'status': 200},
-            '/getModel': {'status': 200}
+            '/getDataset': {'status': 200, 'response': 'MNIST_data'},
+            '/getModel': {'status': 200, 'response': 'hello'},
+            '/getNewID': {'status': 200, 'response': '1'}
         }
 
         if self.path in paths:
             #Serve GET request
-            self.respond(paths[self.path])
+            self._set_response(paths[self.path])
         else:
             #Serve file
             try:
-                #if self.path.endswith(".html"):
-                f = open(curdir + sep + self.path, 'rb')
+                requestedFile = open(curdir + sep + self.path, 'rb')
                 self.send_response(200)
                 self.send_header('Content-type',    'text/html')
                 self.end_headers()
-                self.wfile.write(f.read())
-                f.close()
+                self.wfile.write(requestedFile.read())
+                requestedFile.close()
                 return
 
             except IOError:

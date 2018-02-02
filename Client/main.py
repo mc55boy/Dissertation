@@ -23,7 +23,7 @@ def setup():
         downloadData(datasetName)
 
     print(datasetName)
-    HTTPServices.HTTPHandler.registerClient()
+    HTTPServices.HTTPHandler.connectToServer()
 
 
 setup()
