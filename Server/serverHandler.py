@@ -3,6 +3,12 @@ from os import curdir, sep
 #from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
+numberOfConnectedClients = 0
+
+#POTENTIALLY IMPLEMENT FOR THE MESSAGES TO SEND BACK JSON OR XML TO MAKE IT EASIER TO PROCESS DATA
+#ON THE CLIENT END
+
+
 class MyHandler(BaseHTTPRequestHandler):
 
 
@@ -15,7 +21,7 @@ class MyHandler(BaseHTTPRequestHandler):
 
     def do_POST(self):
         paths = {
-            '/registerClient': {'status': 200, 'response': 'hello'},
+            '/registerClient': {'status': 200, 'response': 'registered'},
         }
 
         if self.path in paths:
@@ -24,16 +30,14 @@ class MyHandler(BaseHTTPRequestHandler):
             post_data = self.rfile.read(content_length)
             print(post_data.decode('utf-8'))
             self._set_response(paths[self.path])
-            #self.wfile.write("POST request {}".format(self.path).encode('utf-8'))
         else:
-            self._set_response({'status': 404})
-            #self.wfile.write("POST request {}".format(self.path).encode('utf-8'))
+            self._set_response({'status': 404, 'response': 'No such page'})
 
     def do_GET(self):
         paths = {
             '/getDataset': {'status': 200, 'response': 'MNIST_data'},
             '/getModel': {'status': 200, 'response': 'hello'},
-            '/getNewID': {'status': 200, 'response': '1'}
+            '/getNewID': {'status': 200, 'response': str(numberOfConnectedClients)}
         }
 
         if self.path in paths:

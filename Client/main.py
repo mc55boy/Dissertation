@@ -1,14 +1,13 @@
 import httpClient as HTTPServices
 import os
 import tarfile
-#import netHandler as netServices
+import netHandler as netServices
+import JSONHandler as JSONHandler
 #multilayerTrain()
-
-#netServices.neuralNet.multilayerTrain()
 
 def downloadData(datasetName):
     print("Downloading Data...")
-    HTTPServices.HTTPHandler.requestData()
+    HTTPServices.HTTPHandler.requestData(datasetName)
     print("Data downloaded")
     print("Extracting files...")
     tar = tarfile.open("Data/" + datasetName + ".tar.gz")
@@ -19,11 +18,16 @@ def downloadData(datasetName):
 
 def setup():
     datasetName = HTTPServices.HTTPHandler.whichDataset()
-    if not os.path.exists("Data/" + datasetName):
-        downloadData(datasetName)
-
     print(datasetName)
+    datasetLocation = "Data/" + datasetName
+    if not os.path.exists(datasetLocation):
+        downloadData(datasetName)
     HTTPServices.HTTPHandler.connectToServer()
 
+def run():
+    netServices.neuralNet.multilayerTrain(datasetLocation)
 
-setup()
+
+#setup()
+#run()
+JSONHandler.JSONHandler.getJSONModel("testNetFile.json")

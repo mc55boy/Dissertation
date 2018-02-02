@@ -40,8 +40,8 @@ def multilayer_perceptron(x):
     return out_layer
 
 class neuralNet:
-    def multilayerTrain():
-        mnist = input_data.read_data_sets("MNIST_data/", one_hot=True)
+    def multilayerTrain(datasetLocation):
+        mnist = input_data.read_data_sets(datasetLocation + "/", one_hot=True)
 
         logits = multilayer_perceptron(X)
 

@@ -1,0 +1,11 @@
+{ "neuralNet":
+    {"layers": [
+      { "layerNum" : 1,
+        "neuronNum" : 100
+      },
+      { "layerNum" : 2,
+        "neuronNum" : 200
+      }
+    ]
+  }
+}
