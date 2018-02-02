@@ -22,6 +22,7 @@ def setup():
     if not os.path.exists("Data/" + datasetName):
         downloadData(datasetName)
 
+    print(datasetName)
     HTTPServices.HTTPHandler.registerClient()
 
 

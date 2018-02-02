@@ -16,17 +16,31 @@ class MyHandler(BaseHTTPRequestHandler):
         response = self.handle_http(opts['status'], self.path)
         self.wfile.write(response)
 
-    def _set_response(self): #This is just a duplicate of handle_http. rewrite this to handle both
-        self.send_response(200)
+    def _set_response(self, opts): #This is just a duplicate of handle_http. rewrite this to handle both
+        self.send_response(opts['status'])
         self.send_header('Content-type', 'text/html')
         self.end_headers()
 
     def do_POST(self):
-        content_length = int(self.headers['Content-Length'])
-        post_data = self.rfile.read(content_length)
-        print(post_data.decode('utf-8'))
-        self._set_response()
-        self.wfile.write("POST request {}".format(self.path).encode('utf-8'))
+
+        paths = {
+            '/registerClient': {'status': 200},
+        }
+
+        if self.path in paths:
+            #Serve PUT request
+            content_length = int(self.headers['Content-Length'])
+            post_data = self.rfile.read(content_length)
+            print(post_data.decode('utf-8'))
+            self._set_response(paths[self.path])
+            self.wfile.write("POST request {}".format(self.path).encode('utf-8'))
+        else:
+            self._set_response({'status': 404})
+            self.wfile.write("POST request {}".format(self.path).encode('utf-8'))
+
+
+
+
 
     def do_GET(self):
         paths = {

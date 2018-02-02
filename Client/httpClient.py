@@ -4,12 +4,12 @@ import http.client, urllib.parse, urllib.request
 class HTTPHandler:
 
     def registerClient():
-        #params = urllib.parse.urlencode({'@number': 12524, '@type': 'issue', '@action': 'show'})
+
         params = urllib.parse.urlencode({'@id': 12524})
         headers = {"Content-type": "application/x-www-form-urlencoded", "Accept": "text/plain"}
-        #conn = http.client.HTTPConnection("bugs.python.org")
+
         conn = http.client.HTTPConnection("localhost", 9000)
-        conn.request("POST", "", params, headers)
+        conn.request("POST", "/registerClient", params, headers)
         response = conn.getresponse()
         print(response.status, response.reason)
         data = response.read()
