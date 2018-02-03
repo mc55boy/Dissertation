@@ -1,9 +1,10 @@
 import httpClient as HTTPServices
 import os
 import tarfile
-import netHandler as netServices
+import netHandler as netHandler
 import JSONHandler as JSONHandler
 #multilayerTrain()
+
 
 def downloadData(datasetName):
     print("Downloading Data...")
@@ -23,11 +24,9 @@ def setup():
     if not os.path.exists(datasetLocation):
         downloadData(datasetName)
     HTTPServices.HTTPHandler.connectToServer()
+    netInput = JSONHandler.JSONHandler.readJSONModel("example.json")
+    netHandler.neuralNet.multilayerTrain(datasetLocation, netInput)
 
-def run():
-    netServices.neuralNet.multilayerTrain(datasetLocation)
 
 
-#setup()
-#run()
-JSONHandler.JSONHandler.getJSONModel("testNetFile.json")
+setup()

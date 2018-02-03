@@ -1,34 +1,14 @@
-{ "office":
-    {"medical": [
-      { "room-number": 100,
-        "use": "reception",
-        "sq-ft": 50,
-        "price": 75
-      },
-      { "room-number": 101,
-        "use": "waiting",
-        "sq-ft": 250,
-        "price": 75
-      },
-      { "room-number": 102,
-        "use": "examination",
-        "sq-ft": 125,
-        "price": 150
-      },
-      { "room-number": 103,
-        "use": "examination",
-        "sq-ft": 125,
-        "price": 150
-      },
-      { "room-number": 104,
-        "use": "office",
-        "sq-ft": 150,
-        "price": 100
-      }
-    ]},
-    "parking": {
-      "location": "premium",
-      "style": "covered",
-      "price": 750
-    }
+{
+  "dataSet" : "MNIST",
+  "structure" : {
+    "inputLayer" : 784,
+    "hiddenLayers" : [10,20],
+    "outputLayer" : 10
+  },
+  "parameters" : {
+    "learningRate" : 0.02,
+    "momentum" : 0.5,
+    "weightDecay" : true,
+    "training_epochs" : 10
+  }
 }

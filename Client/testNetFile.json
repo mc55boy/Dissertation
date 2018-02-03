@@ -1,5 +1,5 @@
 { "neuralNet":
-    {"layers": [
+    [{"layers": [
       { "layerNum" : 1,
         "neuronNum" : 100
       },
@@ -7,5 +7,11 @@
         "neuronNum" : 200
       }
     ]
-  }
+  },
+  {"parameters":[
+    {"learningRate": 0.02},
+    {"momentum": 0.5}
+  ]
+
+  }]
 }

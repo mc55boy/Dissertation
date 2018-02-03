@@ -30,7 +30,10 @@ biases = {
     'out': tf.Variable(tf.random_normal([n_classes]))
 }
 
+networkStruct = None
+
 def multilayer_perceptron(x):
+
     # Hidden fully connected layer with 256 neurons
     layer_1 = tf.add(tf.matmul(x, weights['h1']), biases['b1'])
     # Hidden fully connected layer with 256 neurons
@@ -39,15 +42,49 @@ def multilayer_perceptron(x):
     out_layer = tf.matmul(layer_2, weights['out']) + biases['out']
     return out_layer
 
+def buildNet(inputNet):
+
+    #build input layer
+    inputLayerSize = inputNet["structure"]["inputLayer"]
+    inputLayer = tf.placeholder("float", [None, inputLayerSize])
+
+
+    #initiliase empty layer for loop use
+    existingLayer = inputLayer
+    existingLayer_Size = inputLayerSize
+
+    for newLayer_Size in inputNet["structure"]["hiddenLayers"]:
+        #Create new hidden layer
+        newLayer = tf.placeholder("float", [None, newLayer_Size])
+        #Build weights/connections between prev and new layer
+        newLayer_Weights = tf.Variable(tf.random_normal([existingLayer_Size, newLayer_Size]))
+        #Build biases for new layer
+        newLayer_Bias = tf.Variable(tf.random_normal([newLayer_Size]))
+        #connect new layer to prev layer using the created connections and biases
+        newLayer = tf.add(tf.matmul(existingLayer, newLayer_Weights), newLayer_Bias)
+
+        existingLayer = newLayer
+        existingLayer_Size = newLayer_Size
+
+
+    outputClasses = inputNet["structure"]["outputLayer"]
+    outputWeights = tf.Variable(tf.random_normal([existingLayer_Size, outputClasses]))
+    outputBias = tf.Variable(tf.random_normal([outputClasses]))
+    networkStruct = tf.matmul(existingLayer, outputWeights) + outputBias
+
 class neuralNet:
-    def multilayerTrain(datasetLocation):
+
+
+
+    def multilayerTrain(datasetLocation, netInput):
+
         mnist = input_data.read_data_sets(datasetLocation + "/", one_hot=True)
 
-        logits = multilayer_perceptron(X)
+        logits = buildNet(netInput)
 
         # Define loss and optimizer
-        loss_op = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(
-            logits=logits, labels=Y))
+
+        loss_op = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=networkStruct, labels=Y))
         optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate)
         train_op = optimizer.minimize(loss_op)
         # Initializing the variables
@@ -74,7 +111,7 @@ class neuralNet:
             print("Optimization Finished!")
 
             # Test model
-            pred = tf.nn.softmax(logits)  # Apply softmax to logits
+            pred = tf.nn.softmax(networkStruct)  # Apply softmax to logits
             correct_prediction = tf.equal(tf.argmax(pred, 1), tf.argmax(Y, 1))
             # Calculate accuracy
             accuracy = tf.reduce_mean(tf.cast(correct_prediction, "float"))
