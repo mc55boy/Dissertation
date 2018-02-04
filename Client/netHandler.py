@@ -44,14 +44,14 @@ def multilayer_perceptron(x):
 
 def buildNet(inputNet):
 
-    #build input layer
-    inputLayerSize = inputNet["structure"]["inputLayer"]
-    inputLayer = tf.placeholder("float", [None, inputLayerSize])
-
-
-    #initiliase empty layer for loop use
-    existingLayer = inputLayer
-    existingLayer_Size = inputLayerSize
+    #initiliase Input layer for loop use
+    existingLayer_Size = inputNet["structure"]["inputLayer"]
+    print("INPUT: " + str(existingLayer_Size))
+    x = tf.placeholder("float", [None, 784])
+    #X = tf.placeholder("float", [None, n_input])
+    existingLayer = x
+    #existingLayer = tf.placeholder("float", [None, 784])
+    #existingLayer = tf.placeholder("float", [None, n_input])
 
     for newLayer_Size in inputNet["structure"]["hiddenLayers"]:
         #Create new hidden layer
@@ -68,9 +68,12 @@ def buildNet(inputNet):
 
 
     outputClasses = inputNet["structure"]["outputLayer"]
+    print("OUTPUT: " + str(outputClasses))
     outputWeights = tf.Variable(tf.random_normal([existingLayer_Size, outputClasses]))
     outputBias = tf.Variable(tf.random_normal([outputClasses]))
-    networkStruct = tf.matmul(existingLayer, outputWeights) + outputBias
+    outputLayer = tf.matmul(existingLayer, outputWeights) + outputBias
+
+    return outputLayer
 
 class neuralNet:
 
@@ -81,10 +84,10 @@ class neuralNet:
         mnist = input_data.read_data_sets(datasetLocation + "/", one_hot=True)
 
         logits = buildNet(netInput)
-
+        #logits = multilayer_perceptron(X)
         # Define loss and optimizer
 
-        loss_op = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=networkStruct, labels=Y))
+        loss_op = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=logits, labels=Y))
         optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate)
         train_op = optimizer.minimize(loss_op)
         # Initializing the variables
@@ -111,7 +114,7 @@ class neuralNet:
             print("Optimization Finished!")
 
             # Test model
-            pred = tf.nn.softmax(networkStruct)  # Apply softmax to logits
+            pred = tf.nn.softmax(logits)  # Apply softmax to logits
             correct_prediction = tf.equal(tf.argmax(pred, 1), tf.argmax(Y, 1))
             # Calculate accuracy
             accuracy = tf.reduce_mean(tf.cast(correct_prediction, "float"))
