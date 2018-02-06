@@ -28,5 +28,5 @@ def setup():
     netHandler.neuralNet.multilayerTrain(datasetLocation, netInput)
 
 
-
 setup()
+#netHandler.neuralNet.testBuildNet()

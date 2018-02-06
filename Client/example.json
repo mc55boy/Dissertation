@@ -2,7 +2,7 @@
   "dataSet" : "MNIST",
   "structure" : {
     "inputLayer" : 784,
-    "hiddenLayers" : [100,100],
+    "hiddenLayers" : [100,100,50,20],
     "outputLayer" : 10
   },
   "parameters" : {

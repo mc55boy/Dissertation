@@ -1,6 +1,8 @@
 from __future__ import print_function
 import tensorflow as tf
+import tensorflow.contrib.slim as slim
 from tensorflow.examples.tutorials.mnist import input_data
+
 
 mnist = None
 learning_rate = 0.001
@@ -15,7 +17,6 @@ n_input = 784 # MNIST data input (img shape: 28*28)
 n_classes = 10 # MNIST total classes (0-9 digits)
 
 # tf Graph input
-X = tf.placeholder("float", [None, n_input])
 Y = tf.placeholder("float", [None, n_classes])
 
 # Store layers weight & bias
@@ -42,16 +43,13 @@ def multilayer_perceptron(x):
     out_layer = tf.matmul(layer_2, weights['out']) + biases['out']
     return out_layer
 
-def buildNet(inputNet):
+def buildNet(inputNet, inputLayer):
 
     #initiliase Input layer for loop use
     existingLayer_Size = inputNet["structure"]["inputLayer"]
     print("INPUT: " + str(existingLayer_Size))
-    x = tf.placeholder("float", [None, 784])
-    #X = tf.placeholder("float", [None, n_input])
-    existingLayer = x
-    #existingLayer = tf.placeholder("float", [None, 784])
-    #existingLayer = tf.placeholder("float", [None, n_input])
+
+    existingLayer = inputLayer
 
     for newLayer_Size in inputNet["structure"]["hiddenLayers"]:
         #Create new hidden layer
@@ -75,15 +73,19 @@ def buildNet(inputNet):
 
     return outputLayer
 
+
+
+
+
+
 class neuralNet:
-
-
 
     def multilayerTrain(datasetLocation, netInput):
 
         mnist = input_data.read_data_sets(datasetLocation + "/", one_hot=True)
-
-        logits = buildNet(netInput)
+        existingLayer_Size = netInput["structure"]["inputLayer"]
+        inputLayer = tf.placeholder("float", [None, existingLayer_Size])
+        logits = buildNet(netInput, inputLayer)
         #logits = multilayer_perceptron(X)
         # Define loss and optimizer
 
@@ -104,7 +106,7 @@ class neuralNet:
                 for i in range(total_batch):
                     batch_x, batch_y = mnist.train.next_batch(batch_size)
                     # Run optimization op (backprop) and cost op (to get loss value)
-                    _, c = sess.run([train_op, loss_op], feed_dict={X: batch_x,
+                    _, c = sess.run([train_op, loss_op], feed_dict={inputLayer: batch_x,
                                                                     Y: batch_y})
                     # Compute average loss
                     avg_cost += c / total_batch
@@ -118,7 +120,7 @@ class neuralNet:
             correct_prediction = tf.equal(tf.argmax(pred, 1), tf.argmax(Y, 1))
             # Calculate accuracy
             accuracy = tf.reduce_mean(tf.cast(correct_prediction, "float"))
-            print("Accuracy:", accuracy.eval({X: mnist.test.images, Y: mnist.test.labels}))
+            print("Accuracy:", accuracy.eval({inputLayer: mnist.test.images, Y: mnist.test.labels}))
 
 
     def simpleTrain():
