@@ -19,7 +19,6 @@ def downloadData(datasetName):
 
 def setup():
     datasetName = HTTPServices.HTTPHandler.whichDataset()
-    print(datasetName)
     datasetLocation = "Data/" + datasetName
     if not os.path.exists(datasetLocation):
         downloadData(datasetName)

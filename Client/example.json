@@ -2,13 +2,14 @@
   "dataSet" : "MNIST",
   "structure" : {
     "inputLayer" : 784,
-    "hiddenLayers" : [100,100,50,20],
+    "hiddenLayers" : [100],
     "outputLayer" : 10
   },
   "parameters" : {
-    "learningRate" : 0.02,
+    "learningRate" : 0.001,
     "momentum" : 0.5,
     "weightDecay" : true,
-    "training_epochs" : 10
+    "training_epochs" : 10,
+    "batch_size" :  100
   }
 }
