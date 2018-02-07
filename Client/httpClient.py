@@ -20,6 +20,11 @@ def getNewID():
     assignedID = httpResponse.decode("utf-8")
     return assignedID
 
+def getModel():
+     httpResponse = urllib.request.urlopen("http://localhost:9000/getModel").read()
+     nextModel = httpResponse.decode("utf-8")
+     return nextModel
+
 
 class HTTPHandler:
 
@@ -27,7 +32,10 @@ class HTTPHandler:
         clientID = getNewID()
         registerClient(clientID)
 
-
+    def requestModel():
+        nextModel = getModel()
+        print("MODEL: " + nextModel)
+        urllib.request.urlretrieve("http://localhost:9000/Models/" + nextModel + ".json", "DownloadedModel/model.json")
 
     def requestData(datasetName):
         urllib.request.urlretrieve("http://localhost:9000/Data/" + datasetName + ".tar.gz", "Data/MNIST_data.tar.gz")

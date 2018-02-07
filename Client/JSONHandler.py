@@ -12,3 +12,7 @@ from collections import Counter
 class JSONHandler:
     def readJSONModel(inputFile):
         return json.load(open(inputFile))
+
+    def writeToJSON(outputFile, data):
+        with open(outputFile, 'w') as outfile:
+            json.dump(data, outfile, indent=4)

@@ -1,15 +1,20 @@
 {
-  "dataSet" : "MNIST",
-  "structure" : {
-    "inputLayer" : 784,
-    "hiddenLayers" : [100],
-    "outputLayer" : 10
-  },
-  "parameters" : {
-    "learningRate" : 0.001,
-    "momentum" : 0.5,
-    "weightDecay" : true,
-    "training_epochs" : 10,
-    "batch_size" :  100
-  }
+    "structure": {
+        "outputLayer": 10,
+        "inputLayer": 784,
+        "hiddenLayers": [
+            10
+        ]
+    },
+    "results": {
+        "accuracy": "0.5591"
+    },
+    "dataSet": "MNIST",
+    "parameters": {
+        "learningRate": 0.001,
+        "training_epochs": 1,
+        "momentum": 0.5,
+        "batch_size": 100,
+        "weightDecay": true
+    }
 }

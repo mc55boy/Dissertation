@@ -36,7 +36,7 @@ class MyHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         paths = {
             '/getDataset': {'status': 200, 'response': 'MNIST_data'},
-            '/getModel': {'status': 200, 'response': 'hello'},
+            '/getModel': {'status': 200, 'response': str(1)},
             '/getNewID': {'status': 200, 'response': str(numberOfConnectedClients)}
         }
 

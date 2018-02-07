@@ -1,7 +1,7 @@
 from __future__ import print_function
 import tensorflow as tf
 import tensorflow.contrib.slim as slim
-from tensorflow.examples.tutorials.mnist import input_data
+#from tensorflow.examples.tutorials.mnist import input_data
 
 
 
@@ -50,6 +50,7 @@ class neuralNet:
         outputClassNum = netInput["structure"]["outputLayer"]
 
         mnist = input_data.read_data_sets(datasetLocation + "/", one_hot=True)
+        
         existingLayer_Size = netInput["structure"]["inputLayer"]
         inputLayer = tf.placeholder("float", [None, inputSize])
         outputLayer = tf.placeholder("float", [None, outputClassNum])
@@ -88,4 +89,6 @@ class neuralNet:
             correct_prediction = tf.equal(tf.argmax(pred, 1), tf.argmax(outputLayer, 1))
             # Calculate accuracy
             accuracy = tf.reduce_mean(tf.cast(correct_prediction, "float"))
-            print("Accuracy:", accuracy.eval({inputLayer: mnist.test.images, outputLayer: mnist.test.labels}))
+            accuracyOutput = accuracy.eval({inputLayer: mnist.test.images, outputLayer: mnist.test.labels})
+            print("Accuracy:", accuracyOutput)
+            return accuracyOutput
