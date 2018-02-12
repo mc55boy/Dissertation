@@ -1,5 +1,8 @@
 import string,cgi,time
 from os import curdir, sep
+import uuid
+
+
 #from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
@@ -9,8 +12,39 @@ numberOfConnectedClients = 0
 #ON THE CLIENT END
 
 
-class MyHandler(BaseHTTPRequestHandler):
 
+connectedClients = [None]
+
+def newClient():
+    newID = uuid.uuid4().hex
+    if newID not in connectedClients:
+        if len(connectedClients) == 1 and connectedClients[0] == None:
+            connectedClients[0] = newID
+            print("FIRST")
+            print(connectedClients)
+        else:
+            connectedClients.append(newID)
+            print("SECOND")
+            print(connectedClients)
+    return str(newID)
+
+def testFunction():
+    print("It worked")
+
+def whichDataset():
+    print("Dataset")
+
+def whichModel():
+    print("Model")
+
+paths = {
+    '/getDataset': whichDataset,
+    '/getModel': whichModel,
+    '/getNewID': newClient,
+    '/testFunction': testFunction
+}
+
+class MyHandler(BaseHTTPRequestHandler):
 
     def _set_response(self, opts): #This is just a duplicate of handle_http. rewrite this to handle both
         self.send_response(opts['status'])
@@ -34,15 +68,19 @@ class MyHandler(BaseHTTPRequestHandler):
             self._set_response({'status': 404, 'response': 'No such page'})
 
     def do_GET(self):
-        paths = {
-            '/getDataset': {'status': 200, 'response': 'MNIST_data'},
-            '/getModel': {'status': 200, 'response': str(1)},
-            '/getNewID': {'status': 200, 'response': str(numberOfConnectedClients)}
-        }
+
+        #paths = {
+        #    '/getDataset': {'status': 200, 'response': 'MNIST_data'},
+        #    '/getModel': {'status': 200, 'response': str(1)},
+        #    '/getNewID': {'status': 200, 'response': str(1)}
+        #}
+
+
 
         if self.path in paths:
             #Serve GET request
-            self._set_response(paths[self.path])
+            #self._set_response(paths[self.path])
+            paths[self.path]()
         else:
             #Serve file
             try:

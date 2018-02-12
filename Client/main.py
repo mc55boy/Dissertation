@@ -21,12 +21,15 @@ def downloadData(datasetName):
     print("Data Extracted")
 
 def setup():
+    #Connect to server and register client
+    HTTPServices.HTTPHandler.connectToServer()
+
     datasetName = HTTPServices.HTTPHandler.whichDataset()
     datasetLocation = "Data/" + datasetName
     if not os.path.exists(datasetLocation):
         downloadData(datasetName)
     HTTPServices.HTTPHandler.requestModel()
-    HTTPServices.HTTPHandler.connectToServer()
+
 
 def run():
     netInput = JSONHandler.JSONHandler.readJSONModel("DownloadedModel/model.json")
@@ -36,6 +39,7 @@ def run():
     JSONHandler.JSONHandler.writeToJSON("DownloadedModel/model.json", netInput)
 
 
-setup()
-run()
+HTTPServices.HTTPHandler.testFunction()
+#setup()
+#run()
 #netHandler.neuralNet.testBuildNet()

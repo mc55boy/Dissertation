@@ -15,9 +15,21 @@ def registerClient(clientID):
         print("Connection failed")
     conn.close()
 
+def sendGet(url):
+    try:
+        httpResponse = urllib.request.urlopen("http://localhost:9000/" + url).read()
+        response = httpResponse.decode("utf-8")
+        return True, response
+    except urllib.error.URLError as e:
+        return False, e.reason
+
 def getNewID():
-    httpResponse = urllib.request.urlopen("http://localhost:9000/getNewID").read()
-    assignedID = httpResponse.decode("utf-8")
+    success, response = sendGet("getNewID")
+    if success:
+        print(response)
+    else:
+        print(response)
+
     return assignedID
 
 def getModel():
@@ -28,9 +40,16 @@ def getModel():
 
 class HTTPHandler:
 
+    def testFunction():
+        success, response = sendGet("testFunction")
+        if success:
+            print(response)
+        else:
+            print(response)
+
+
     def connectToServer():
-        clientID = getNewID()
-        registerClient(clientID)
+        registerClient(getNewID())
 
     def requestModel():
         nextModel = getModel()
