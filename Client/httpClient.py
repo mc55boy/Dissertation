@@ -1,5 +1,8 @@
 import http.client, urllib.parse, urllib.request
 #import urllib.request
+import json
+
+myID = None
 
 def registerClient(clientID):
     params = urllib.parse.urlencode({'@clientID': clientID})
@@ -26,16 +29,23 @@ def sendGet(url):
 def getNewID():
     success, response = sendGet("getNewID")
     if success:
+        myID = response
         print(response)
     else:
         print(response)
 
-    return assignedID
+    #return assignedID
 
 def getModel():
-     httpResponse = urllib.request.urlopen("http://localhost:9000/getModel").read()
-     nextModel = httpResponse.decode("utf-8")
-     return nextModel
+
+    dataToSend = json.dumps({"ID" : myID}).encode('utf-8')
+
+    request = urllib.request.Request("http://localhost:9000/getModel", data=dataToSend, headers={'Content-Type': 'application/json'})
+    response = urllib.request.urlopen(request)
+    print(response.decode('utf-8'))
+    #httpResponse = urllib.request.urlopen("http://localhost:9000/getModel", data=dataToSend, headers={'Content-Type': 'application/json'}).read()
+    #nextModel = response.decode("utf-8")
+    return nextModel
 
 
 class HTTPHandler:

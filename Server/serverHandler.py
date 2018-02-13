@@ -1,18 +1,13 @@
 import string,cgi,time
 from os import curdir, sep
 import uuid
-
-
-#from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
 from http.server import BaseHTTPRequestHandler, HTTPServer
-
-numberOfConnectedClients = 0
 
 #POTENTIALLY IMPLEMENT FOR THE MESSAGES TO SEND BACK JSON OR XML TO MAKE IT EASIER TO PROCESS DATA
 #ON THE CLIENT END
 
-
-
+numberOfConnectedClients = 0
+datasetInUse = None
 connectedClients = [None]
 
 def newClient():
@@ -20,29 +15,44 @@ def newClient():
     if newID not in connectedClients:
         if len(connectedClients) == 1 and connectedClients[0] == None:
             connectedClients[0] = newID
-            print("FIRST")
-            print(connectedClients)
+            return {'status': 200, 'response': str(connectedClients[0])}
         else:
             connectedClients.append(newID)
-            print("SECOND")
-            print(connectedClients)
-    return str(newID)
+            return {'status': 200, 'response': str(newID)}
+    return {'status': 500, 'response': "Failed"}
 
 def testFunction():
-    print("It worked")
+    response = {'status': 200, 'response': 'Test function called'}
+    return response
 
 def whichDataset():
-    print("Dataset")
+    datasetInUse = "MNIST_data"
+    response = {'status': 200, 'response': datasetInUse}
+    return response
 
 def whichModel():
-    print("Model")
+    modelInUse = "1"
+    response = {'status': 200, 'response': modelInUse}
+    return response
 
-paths = {
+def registerClient():
+    response = {'status': 200, 'response': "registered"}
+    return response
+
+
+
+getPaths = {
     '/getDataset': whichDataset,
-    '/getModel': whichModel,
     '/getNewID': newClient,
     '/testFunction': testFunction
 }
+
+postPaths = {
+    '/getModel': whichModel,
+    '/registerClient': registerClient
+}
+
+
 
 class MyHandler(BaseHTTPRequestHandler):
 
@@ -54,16 +64,14 @@ class MyHandler(BaseHTTPRequestHandler):
         self.wfile.write(bytes(content, 'utf-8'))
 
     def do_POST(self):
-        paths = {
-            '/registerClient': {'status': 200, 'response': 'registered'},
-        }
 
-        if self.path in paths:
+
+        if self.path in postPaths:
             #Serve PUT request
             content_length = int(self.headers['Content-Length'])
             post_data = self.rfile.read(content_length)
             print(post_data.decode('utf-8'))
-            self._set_response(paths[self.path])
+            self._set_response(postPaths[self.path]())
         else:
             self._set_response({'status': 404, 'response': 'No such page'})
 
@@ -77,10 +85,10 @@ class MyHandler(BaseHTTPRequestHandler):
 
 
 
-        if self.path in paths:
+        if self.path in getPaths:
             #Serve GET request
             #self._set_response(paths[self.path])
-            paths[self.path]()
+            self._set_response(getPaths[self.path]())
         else:
             #Serve file
             try:

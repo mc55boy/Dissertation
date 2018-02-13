@@ -4,7 +4,7 @@ import tarfile
 import netHandler as netHandler
 import JSONHandler as JSONHandler
 
-#multilayerTrain()
+
 
 datasetLocation = "Data/"
 
@@ -39,7 +39,7 @@ def run():
     JSONHandler.JSONHandler.writeToJSON("DownloadedModel/model.json", netInput)
 
 
-HTTPServices.HTTPHandler.testFunction()
-#setup()
+#HTTPServices.HTTPHandler.testFunction()
+setup()
 #run()
 #netHandler.neuralNet.testBuildNet()
