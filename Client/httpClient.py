@@ -4,19 +4,6 @@ import json
 
 myID = None
 
-def registerClient(clientID):
-    params = urllib.parse.urlencode({'@clientID': clientID})
-    headers = {"Content-type": "application/x-www-form-urlencoded", "Accept": "text/plain"}
-    conn = http.client.HTTPConnection("localhost", 9000)
-    conn.request("POST", "/registerClient", params, headers)
-    response = conn.getresponse()
-    if response.status == 200:
-        print("OK Response")
-        data = response.read()
-        print(data)
-    else:
-        print("Connection failed")
-    conn.close()
 
 def sendGet(url):
     try:
@@ -26,25 +13,47 @@ def sendGet(url):
     except urllib.error.URLError as e:
         return False, e.reason
 
-def getNewID():
-    success, response = sendGet("getNewID")
-    if success:
-        myID = response
-        print(response)
-    else:
-        print(response)
 
-    #return assignedID
+def sendPost(url, dataToSend, header):
+
+    success = False
+
+
+    request = urllib.request.Request("http://localhost:9000" + url, data=dataToSend, headers=header)
+    response = urllib.request.urlopen(request)
+
+    if response.status == 200:
+        print("OK Response")
+        data = response.read()
+        success = True
+    elif response.status == 404:
+        print("Not found")
+    elif response.status == 500:
+        print("SERVER ERROR")
+        print(response.read())
+    else:
+        print("Connection failed")
+    return success, response.read()
+
+
+def registerClient(clientID):
+    dataToSend = json.dumps({'clientID': clientID}).encode('utf-8')
+    url = "/registerClient"
+    header = {"Content-type": "application/x-www-form-urlencoded", "Accept": "text/plain"}
+    return sendPost(url, dataToSend, header)
+
 
 def getModel():
-
+    url = "/getModel"
     dataToSend = json.dumps({"ID" : myID}).encode('utf-8')
+    header = {'Content-Type': 'application/json'}
+    success, response = sendPost(url, dataToSend, header)
 
-    request = urllib.request.Request("http://localhost:9000/getModel", data=dataToSend, headers={'Content-Type': 'application/json'})
-    response = urllib.request.urlopen(request)
-    print(response.decode('utf-8'))
-    #httpResponse = urllib.request.urlopen("http://localhost:9000/getModel", data=dataToSend, headers={'Content-Type': 'application/json'}).read()
-    #nextModel = response.decode("utf-8")
+    if success:
+        print(response)
+    else:
+        print("FAILED")
+        print(response)
     return nextModel
 
 
@@ -59,7 +68,18 @@ class HTTPHandler:
 
 
     def connectToServer():
-        registerClient(getNewID())
+        #Get new ID
+        success, response = sendGet("getNewID")
+        if success:
+            print("New ID: " + response)
+            success, response = registerClient(response)
+            if success:
+                print("Registered Client")
+            else:
+                print("Failed to register client")
+        else:
+            print("Failed to obtain new ID")
+
 
     def requestModel():
         nextModel = getModel()

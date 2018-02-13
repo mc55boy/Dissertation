@@ -38,7 +38,6 @@ def run():
     print(netInput["results"]["accuracy"])
     JSONHandler.JSONHandler.writeToJSON("DownloadedModel/model.json", netInput)
 
-
 #HTTPServices.HTTPHandler.testFunction()
 setup()
 #run()

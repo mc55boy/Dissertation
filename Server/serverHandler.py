@@ -2,6 +2,7 @@ import string,cgi,time
 from os import curdir, sep
 import uuid
 from http.server import BaseHTTPRequestHandler, HTTPServer
+import json
 
 #POTENTIALLY IMPLEMENT FOR THE MESSAGES TO SEND BACK JSON OR XML TO MAKE IT EASIER TO PROCESS DATA
 #ON THE CLIENT END
@@ -12,14 +13,16 @@ connectedClients = [None]
 
 def newClient():
     newID = uuid.uuid4().hex
-    if newID not in connectedClients:
-        if len(connectedClients) == 1 and connectedClients[0] == None:
-            connectedClients[0] = newID
-            return {'status': 200, 'response': str(connectedClients[0])}
-        else:
-            connectedClients.append(newID)
-            return {'status': 200, 'response': str(newID)}
-    return {'status': 500, 'response': "Failed"}
+
+    newClient = {"clientID" : newID, "Registered" : False, "Model" : "None"}
+
+    if len(connectedClients) == 1 and connectedClients[0] == None:
+        connectedClients[0] = newClient
+    else:
+        connectedClients.append(newClient)
+
+    return {'status': 200, 'response': str(newID)}
+
 
 def testFunction():
     response = {'status': 200, 'response': 'Test function called'}
@@ -30,12 +33,19 @@ def whichDataset():
     response = {'status': 200, 'response': datasetInUse}
     return response
 
-def whichModel():
+def whichModel(self):
     modelInUse = "1"
     response = {'status': 200, 'response': modelInUse}
     return response
 
-def registerClient():
+def registerClient(self):
+    content_length = int(self.headers['Content-Length'])
+    post_data = self.rfile.read(content_length)
+    jsonData = json.loads(post_data.decode('utf-8'))
+    clientID = jsonData['clientID']
+    client = next(item for item in connectedClients if item["clientID"] == clientID)
+
+    print(client)
     response = {'status': 200, 'response': "registered"}
     return response
 
@@ -68,10 +78,8 @@ class MyHandler(BaseHTTPRequestHandler):
 
         if self.path in postPaths:
             #Serve PUT request
-            content_length = int(self.headers['Content-Length'])
-            post_data = self.rfile.read(content_length)
-            print(post_data.decode('utf-8'))
-            self._set_response(postPaths[self.path]())
+
+            self._set_response(postPaths[self.path](self))
         else:
             self._set_response({'status': 404, 'response': 'No such page'})
 
