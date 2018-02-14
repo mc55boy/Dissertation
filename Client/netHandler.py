@@ -1,7 +1,7 @@
 from __future__ import print_function
 import tensorflow as tf
 import tensorflow.contrib.slim as slim
-#from tensorflow.examples.tutorials.mnist import input_data
+from tensorflow.examples.tutorials.mnist import input_data
 
 
 
@@ -36,6 +36,9 @@ def buildNet(inputNet, inputLayer):
     outputLayer = tf.matmul(existingLayer, outputWeights) + outputBias
     return outputLayer
 
+def loadDataset():
+    #tf.data.TFRecirdDataset
+    print("nothing")
 
 class neuralNet:
 
@@ -49,8 +52,9 @@ class neuralNet:
         inputSize = netInput["structure"]["inputLayer"]
         outputClassNum = netInput["structure"]["outputLayer"]
 
+        #mnist = loadDataset()
         mnist = input_data.read_data_sets(datasetLocation + "/", one_hot=True)
-        
+
         existingLayer_Size = netInput["structure"]["inputLayer"]
         inputLayer = tf.placeholder("float", [None, inputSize])
         outputLayer = tf.placeholder("float", [None, outputClassNum])

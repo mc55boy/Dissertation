@@ -4,7 +4,7 @@ import tarfile
 import netHandler as netHandler
 import JSONHandler as JSONHandler
 
-
+import time
 
 myID = None
 
@@ -24,18 +24,11 @@ def downloadData(datasetName):
 
 def setup():
     #Connect to server and register client
-
+    global myID
     success, myID = HTTPServices.HTTPHandler.connectToServer()
     if success:
-        print(myID)
-        success, datasetName = HTTPServices.HTTPHandler.whichDataset(myID)
-        if success:
-            datasetLocation = "Data/" + datasetName
-            if not os.path.exists(datasetLocation):
-                downloadData(datasetName)
-            HTTPServices.HTTPHandler.requestModel(myID)
-        else:
-            print("Failed to get Dataset name")
+        print("Successfully Registered Client")
+        return True
     else:
         print("Failed to register client")
         return False
@@ -45,11 +38,31 @@ def setup():
 
 
 def run():
-    netInput = JSONHandler.JSONHandler.readJSONModel("DownloadedModel/model.json")
-    accuracy = netHandler.neuralNet.multilayerTrain(datasetLocation, netInput)
-    netInput["results"]["accuracy"] = str(accuracy);
-    print(netInput["results"]["accuracy"])
-    JSONHandler.JSONHandler.writeToJSON("DownloadedModel/model.json", netInput)
 
-setup()
-#run()
+    while True:
+
+        if HTTPServices.HTTPHandler.isReady():
+            success, datasetName = HTTPServices.HTTPHandler.whichDataset(myID)
+            if success:
+                datasetLocation = "Data/" + datasetName
+                if not os.path.exists(datasetLocation):
+                    downloadData(datasetName)
+                HTTPServices.HTTPHandler.requestModel(myID)
+            else:
+                print("Failed to get Dataset name")
+
+            netInput = JSONHandler.JSONHandler.readJSONModel("DownloadedModel/model.json")
+            accuracy = netHandler.neuralNet.multilayerTrain(datasetLocation, netInput)
+            netInput["results"]["accuracy"] = str(accuracy);
+            print(netInput["results"]["accuracy"])
+            JSONHandler.JSONHandler.writeToJSON("DownloadedModel/model.json", netInput)
+        else:
+            print("Not Ready...")
+            time.sleep(0.3)
+
+
+
+if setup():
+    run()
+else:
+    print("Failed to setup client")

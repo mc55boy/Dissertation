@@ -41,10 +41,9 @@ def registerClient(clientID):
 def getModel(myID):
     url = "/getModel"
     dataToSend = json.dumps({"clientID" : myID}).encode('utf-8')
-    #header = {'Content-Type': 'application/json'}
     header = {"Content-type": "application/x-www-form-urlencoded", "Accept": "text/plain"}
     success, response = sendPost(url, dataToSend, header)
-
+    print("RESPONSE: " + response)
     if success:
         print(response)
         return response
@@ -57,12 +56,13 @@ def getModel(myID):
 
 class HTTPHandler:
 
-    def testFunction():
-        success, response = sendGet("testFunction")
-        if success:
-            print(response)
+    def isReady():
+        success, response = sendGet("ready")
+        if response == "True":
+            return True
         else:
-            print(response)
+            return False
+
 
 
     def connectToServer():
