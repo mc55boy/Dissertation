@@ -28,12 +28,18 @@ def testFunction():
     response = {'status': 200, 'response': 'Test function called'}
     return response
 
-def whichDataset():
+
+def whichDataset(self):
     datasetInUse = "MNIST_data"
     response = {'status': 200, 'response': datasetInUse}
     return response
 
 def whichModel(self):
+    content_length = int(self.headers['Content-Length'])
+    post_data = self.rfile.read(content_length)
+    jsonData = json.loads(post_data.decode('utf-8'))
+    clientID = jsonData['clientID']
+    print(jsonData)
     modelInUse = "1"
     response = {'status': 200, 'response': modelInUse}
     return response
@@ -43,22 +49,29 @@ def registerClient(self):
     post_data = self.rfile.read(content_length)
     jsonData = json.loads(post_data.decode('utf-8'))
     clientID = jsonData['clientID']
-    client = next(item for item in connectedClients if item["clientID"] == clientID)
+    try:
+        client = next(item for item in connectedClients if item["clientID"] == clientID)
+        for i, item in enumerate(connectedClients):
+            if item == client:
+                client['Registered'] = True
+                connectedClients[i] = client
+        return {'status': 200, 'response': "Client Registered"}
+    except StopIteration:
+        return {'status': 500, 'response': "Client not found"}
 
-    print(client)
-    response = {'status': 200, 'response': "registered"}
-    return response
-
-
+def ready(self):
+    print("Ready")
+    #Insert code here to see whether the server is ready to give clients models
 
 getPaths = {
-    '/getDataset': whichDataset,
     '/getNewID': newClient,
-    '/testFunction': testFunction
+    '/testFunction': testFunction,
+    '/ready': ready
 }
 
 postPaths = {
     '/getModel': whichModel,
+    '/getDataset': whichDataset,
     '/registerClient': registerClient
 }
 

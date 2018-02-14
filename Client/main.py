@@ -6,6 +6,8 @@ import JSONHandler as JSONHandler
 
 
 
+myID = None
+
 datasetLocation = "Data/"
 
 
@@ -22,13 +24,24 @@ def downloadData(datasetName):
 
 def setup():
     #Connect to server and register client
-    HTTPServices.HTTPHandler.connectToServer()
 
-    datasetName = HTTPServices.HTTPHandler.whichDataset()
-    datasetLocation = "Data/" + datasetName
-    if not os.path.exists(datasetLocation):
-        downloadData(datasetName)
-    HTTPServices.HTTPHandler.requestModel()
+    success, myID = HTTPServices.HTTPHandler.connectToServer()
+    if success:
+        print(myID)
+        success, datasetName = HTTPServices.HTTPHandler.whichDataset(myID)
+        if success:
+            datasetLocation = "Data/" + datasetName
+            if not os.path.exists(datasetLocation):
+                downloadData(datasetName)
+            HTTPServices.HTTPHandler.requestModel(myID)
+        else:
+            print("Failed to get Dataset name")
+    else:
+        print("Failed to register client")
+        return False
+
+
+
 
 
 def run():
@@ -38,7 +51,5 @@ def run():
     print(netInput["results"]["accuracy"])
     JSONHandler.JSONHandler.writeToJSON("DownloadedModel/model.json", netInput)
 
-#HTTPServices.HTTPHandler.testFunction()
 setup()
 #run()
-#netHandler.neuralNet.testBuildNet()

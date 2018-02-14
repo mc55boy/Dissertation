@@ -2,8 +2,6 @@ import http.client, urllib.parse, urllib.request
 #import urllib.request
 import json
 
-myID = None
-
 
 def sendGet(url):
     try:
@@ -18,13 +16,10 @@ def sendPost(url, dataToSend, header):
 
     success = False
 
-
     request = urllib.request.Request("http://localhost:9000" + url, data=dataToSend, headers=header)
     response = urllib.request.urlopen(request)
 
     if response.status == 200:
-        print("OK Response")
-        data = response.read()
         success = True
     elif response.status == 404:
         print("Not found")
@@ -33,7 +28,7 @@ def sendPost(url, dataToSend, header):
         print(response.read())
     else:
         print("Connection failed")
-    return success, response.read()
+    return success, response.read().decode('utf-8')
 
 
 def registerClient(clientID):
@@ -43,18 +38,21 @@ def registerClient(clientID):
     return sendPost(url, dataToSend, header)
 
 
-def getModel():
+def getModel(myID):
     url = "/getModel"
-    dataToSend = json.dumps({"ID" : myID}).encode('utf-8')
-    header = {'Content-Type': 'application/json'}
+    dataToSend = json.dumps({"clientID" : myID}).encode('utf-8')
+    #header = {'Content-Type': 'application/json'}
+    header = {"Content-type": "application/x-www-form-urlencoded", "Accept": "text/plain"}
     success, response = sendPost(url, dataToSend, header)
 
     if success:
         print(response)
+        return response
     else:
         print("FAILED")
         print(response)
-    return nextModel
+        return response
+
 
 
 class HTTPHandler:
@@ -71,25 +69,34 @@ class HTTPHandler:
         #Get new ID
         success, response = sendGet("getNewID")
         if success:
-            print("New ID: " + response)
+            tempID = response
             success, response = registerClient(response)
             if success:
-                print("Registered Client")
+                print("New ID: " + tempID)
+                print(response)
+                return True, tempID
             else:
-                print("Failed to register client")
+                print(response)
+                return False, None
         else:
             print("Failed to obtain new ID")
+            return False, None
 
 
-    def requestModel():
-        nextModel = getModel()
+    def requestModel(myID):
+        nextModel = getModel(myID)
         print("MODEL: " + nextModel)
         urllib.request.urlretrieve("http://localhost:9000/Models/" + nextModel + ".json", "DownloadedModel/model.json")
 
     def requestData(datasetName):
         urllib.request.urlretrieve("http://localhost:9000/Data/" + datasetName + ".tar.gz", "Data/MNIST_data.tar.gz")
 
-    def whichDataset():
-        httpResponse = urllib.request.urlopen("http://localhost:9000/getDataset").read()
-        datasetName = httpResponse.decode("utf-8")
-        return datasetName
+    def whichDataset(myID):
+        dataToSend = json.dumps({'clientID': myID}).encode('utf-8')
+        url = "/getDataset"
+        header = {"Content-type": "application/x-www-form-urlencoded", "Accept": "text/plain"}
+        return sendPost(url, dataToSend, header)
+
+        #httpResponse = urllib.request.urlopen("http://localhost:9000/getDataset").read()
+        #datasetName = httpResponse.decode("utf-8")
+        #return datasetName
