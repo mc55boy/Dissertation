@@ -104,6 +104,7 @@ class neuralNet:
                     # Compute average loss
                     avg_cost += c / total_batch
                     print("Batch " + str(int(end / batch_size))  + "/" + str(total_batch) + "  cost: " + str(avg_cost))
+                    i += batch_size
                 # Display logs per epoch step
                 if epoch % display_step == 0:
                     print("Epoch:", '%04d' % (epoch+1), "cost={:.9f}".format(avg_cost))
