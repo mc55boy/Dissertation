@@ -115,6 +115,6 @@ class neuralNet:
             correct_prediction = tf.equal(tf.argmax(pred, 1), tf.argmax(outputLayer, 1))
             # Calculate accuracy
             accuracy = tf.reduce_mean(tf.cast(correct_prediction, "float"))
-            accuracyOutput = accuracy.eval({inputLayer: mnist.test.images, outputLayer: mnist.test.labels})
+            accuracyOutput = accuracy.eval({inputLayer: test_x, outputLayer: test_y})
             print("Accuracy:", accuracyOutput)
             return accuracyOutput

@@ -25,7 +25,7 @@ def create_lexicon(pos, neg):
     w_counts = Counter(lexicon)
     l2 = []
     for w in w_counts:
-        if 300 > w_counts[w] > 100:
+        if 200 > w_counts[w] > 150:
             l2.append(w)
     print(len(l2))
     return l2
