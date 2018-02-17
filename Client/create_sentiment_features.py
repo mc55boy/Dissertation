@@ -25,7 +25,7 @@ def create_lexicon(pos, neg):
     w_counts = Counter(lexicon)
     l2 = []
     for w in w_counts:
-        if 200 > w_counts[w] > 150:
+        if 800 > w_counts[w] > 50:
             l2.append(w)
     print(len(l2))
     return l2
@@ -56,6 +56,7 @@ def create_feature_sets_and_labels(pos, neg, test_size=0.1):
     print("Creating features...")
     features += sample_handling(pos, lexicon, [1, 0])
     features += sample_handling(neg, lexicon, [0, 1])
+
 
     #Really important to shuffle
     random.shuffle(features)
