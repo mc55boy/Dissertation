@@ -1,9 +1,11 @@
-import http.client, urllib.parse, urllib.request
+import urllib.parse
+import urllib.request
 #import urllib.request
 import json
 
 
 def sendGet(url):
+    print("Sending GET")
     try:
         httpResponse = urllib.request.urlopen("http://localhost:9000/" + url).read()
         response = httpResponse.decode("utf-8")

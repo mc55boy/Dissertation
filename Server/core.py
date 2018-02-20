@@ -1,41 +1,29 @@
 from threading import Thread
-from multiprocessing import Queue, Value
+from multiprocessing import Value
 import server as server
 # import evoHandler as evo
 import time
 
 
-def runServer(threadname, r, flag):
+def runServer(threadname, isReady):
     print(threadname + " running...")
-    server.main(r, flag)
+    server.main(isReady)
     print("Server Thread end")
 
 
-def runEvo(threadname, r, flag):
-    while True:
-        
-        print(flag.value)
-        time.sleep(0.5)
-    print("Evo Thread end")
+def runEvo(threadname, isReady):
+    isReady.value = 0
+    time.sleep(10)
+    print("READY")
+    isReady.value = 1
 
 
-ready = Queue()
-initialFlag = Value('i', 1)
+initialFlag = Value('i', 0)
 
-serverThread = Thread(name="Server", target=runServer, args=("ServerThread", ready, initialFlag))
-evoThread = Thread(name="Evo", target=runEvo, args=("EvoThread", ready, initialFlag))
+serverThread = Thread(name="Server", target=runServer, args=("ServerThread", initialFlag))
+evoThread = Thread(name="Evo", target=runEvo, args=("EvoThread", initialFlag))
 
 evoThread.start()
 serverThread.start()
 serverThread.join()
 evoThread.join()
-
-
-file = open("ready.txt", "w")
-file.write("False")
-file.close()
-time.sleep(1)
-print("READY")
-file = open("ready.txt", "w")
-file.write("True")
-file.close()

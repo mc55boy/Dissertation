@@ -2,7 +2,7 @@ from os import curdir, sep
 import uuid
 from http.server import BaseHTTPRequestHandler, HTTPServer
 import json
-from multiprocessing import Queue, Value
+from multiprocessing import Value
 import time
 
 
@@ -13,6 +13,8 @@ import time
 datasetInUse = None
 connectedClients = [None]
 models = [None]
+
+isEvoReady = None
 
 
 def newClient():
@@ -69,13 +71,16 @@ def registerClient(self):
 
 
 def ready():
+    global isEvoReady
+    isReady = isEvoReady.value
+    '''
     file = open("ready.txt", "r")
     fileReady = file.readline()
-    if fileReady == "True":
-        ready = true
+    '''
+
+    if isReady == 1:
         return {'status': 200, 'response': 'True'}
     else:
-        ready = false
         return {'status': 200, 'response': 'False'}
 
     # Insert code here to see whether the server is ready to give clients models
@@ -95,16 +100,6 @@ postPaths = {
 
 
 class MyHandler(BaseHTTPRequestHandler):
-    def __init__(self, readyThing, initialFlag):
-        initialFlag.value = 0
-        readyThing.put(True)
-        time.sleep(1)
-        readyThing.put(False)
-        initialFlag.value = 1
-        time.sleep(1)
-        readyThing.put(True)
-        initialFlag.value = 0
-
 
     def _set_response(self, opts): # This is just a duplicate of handle_http. rewrite this to handle both
         self.send_response(opts['status'])
@@ -139,9 +134,11 @@ class MyHandler(BaseHTTPRequestHandler):
                 self.send_error(404, 'File Not Found: %s' % self.path)
 
 
-def main(readyQueue, initialFlag):
+def main(initialFlag):
     try:
-        server = HTTPServer(('', 9000), MyHandler(readyQueue, initialFlag))
+        global isEvoReady
+        isEvoReady = initialFlag
+        server = HTTPServer(('', 9000), MyHandler)
         print('started httpserver...')
         server.serve_forever()
     except KeyboardInterrupt:

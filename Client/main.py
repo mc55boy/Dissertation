@@ -47,7 +47,8 @@ def run():
                 HTTPServices.HTTPHandler.requestModel(myID)
             else:
                 print("Failed to get Dataset name")
-
+            print("Sleeping....")
+            time.sleep(1000)
             netInput = JSONHandler.JSONHandler.readJSONModel("DownloadedModel/model.json")
             accuracy = netHandler.neuralNet.multilayerTrain(datasetLocation, netInput)
             netInput["results"]["accuracy"] = str(accuracy);
