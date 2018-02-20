@@ -1,24 +1,24 @@
-import string,cgi,time
 from os import curdir, sep
 import uuid
 from http.server import BaseHTTPRequestHandler, HTTPServer
 import json
+from multiprocessing import Queue
 
 
-#POTENTIALLY IMPLEMENT FOR THE MESSAGES TO SEND BACK JSON OR XML TO MAKE IT EASIER TO PROCESS DATA
-#ON THE CLIENT END
+# POTENTIALLY IMPLEMENT FOR THE MESSAGES TO SEND BACK JSON OR XML TO MAKE IT EASIER TO PROCESS DATA
+# ON THE CLIENT END
 
 
 datasetInUse = None
 connectedClients = [None]
 models = [None]
 
+
 def newClient():
     newID = uuid.uuid4().hex
+    newClient = {"clientID": newID, "Registered": False, "Model": "None"}
 
-    newClient = {"clientID" : newID, "Registered" : False, "Model" : "None"}
-
-    if len(connectedClients) == 1 and connectedClients[0] == None:
+    if len(connectedClients) == 1 and connectedClients[0] is None:
         connectedClients[0] = newClient
     else:
         connectedClients.append(newClient)
@@ -36,6 +36,7 @@ def whichDataset(self):
     response = {'status': 200, 'response': datasetInUse}
     return response
 
+
 def whichModel(self):
     content_length = int(self.headers['Content-Length'])
     post_data = self.rfile.read(content_length)
@@ -48,6 +49,7 @@ def whichModel(self):
                 return {'status': 200, 'response': "1"}
     except StopIteration:
         return {'status': 500, 'response': "Client not found"}
+
 
 def registerClient(self):
     content_length = int(self.headers['Content-Length'])
@@ -64,15 +66,19 @@ def registerClient(self):
     except StopIteration:
         return {'status': 500, 'response': "Client not found"}
 
+
 def ready():
     file = open("ready.txt", "r")
-    ready = file.readline()
-    if ready == "True":
+    fileReady = file.readline()
+    if fileReady == "True":
+        ready = true
         return {'status': 200, 'response': 'True'}
     else:
+        ready = false
         return {'status': 200, 'response': 'False'}
 
-    #Insert code here to see whether the server is ready to give clients models
+    # Insert code here to see whether the server is ready to give clients models
+
 
 getPaths = {
     '/getNewID': newClient,
@@ -87,10 +93,11 @@ postPaths = {
 }
 
 
-
 class MyHandler(BaseHTTPRequestHandler):
+    def __init__(readyThing):
+        print("Initializing")
 
-    def _set_response(self, opts): #This is just a duplicate of handle_http. rewrite this to handle both
+    def _set_response(self, opts): # This is just a duplicate of handle_http. rewrite this to handle both
         self.send_response(opts['status'])
         self.send_header('Content-type', 'text/html')
         self.end_headers()
@@ -98,31 +105,18 @@ class MyHandler(BaseHTTPRequestHandler):
         self.wfile.write(bytes(content, 'utf-8'))
 
     def do_POST(self):
-
-
         if self.path in postPaths:
-            #Serve PUT request
-
+            # Serve PUT request
             self._set_response(postPaths[self.path](self))
         else:
             self._set_response({'status': 404, 'response': 'No such page'})
 
     def do_GET(self):
-
-        #paths = {
-        #    '/getDataset': {'status': 200, 'response': 'MNIST_data'},
-        #    '/getModel': {'status': 200, 'response': str(1)},
-        #    '/getNewID': {'status': 200, 'response': str(1)}
-        #}
-
-
-
         if self.path in getPaths:
-            #Serve GET request
-            #self._set_response(paths[self.path])
+            # Serve GET request
             self._set_response(getPaths[self.path]())
         else:
-            #Serve file
+            # Serve file
             try:
                 requestedFile = open(curdir + sep + self.path, 'rb')
                 self.send_response(200)
@@ -133,17 +127,18 @@ class MyHandler(BaseHTTPRequestHandler):
                 return
 
             except IOError:
-                self.send_error(404,'File Not Found: %s' % self.path)
+                self.send_error(404, 'File Not Found: %s' % self.path)
 
 
-def main():
+def main(readyQueue):
     try:
-        server = HTTPServer(('', 9000), MyHandler)
+        server = HTTPServer(('', 9000), MyHandler(readyQueue))
         print('started httpserver...')
         server.serve_forever()
     except KeyboardInterrupt:
-        print ('^C received, shutting down server')
+        print('^C received, shutting down server')
         server.socket.close()
+
 
 if __name__ == '__main__':
     main()

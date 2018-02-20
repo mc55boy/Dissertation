@@ -3,7 +3,6 @@ import os
 import tarfile
 import netHandler as netHandler
 import JSONHandler as JSONHandler
-
 import time
 
 myID = None
@@ -22,8 +21,9 @@ def downloadData(datasetName):
     os.remove("Data/" + datasetName + ".tar.gz")
     print("Data Extracted")
 
+
 def setup():
-    #Connect to server and register client
+    # Connect to server and register client
     global myID
     success, myID = HTTPServices.HTTPHandler.connectToServer()
     if success:
@@ -32,9 +32,6 @@ def setup():
     else:
         print("Failed to register client")
         return False
-
-
-
 
 
 def run():
@@ -59,7 +56,6 @@ def run():
         else:
             print("Not Ready...")
             time.sleep(0.3)
-
 
 
 if setup():
