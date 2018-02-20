@@ -2,7 +2,7 @@ from os import curdir, sep
 import uuid
 from http.server import BaseHTTPRequestHandler, HTTPServer
 import json
-from multiprocessing import Queue
+from multiprocessing import Queue, Value
 import time
 
 
@@ -96,14 +96,14 @@ postPaths = {
 
 class MyHandler(BaseHTTPRequestHandler):
     def __init__(self, readyThing, initialFlag):
-        initialFlag = False
+        initialFlag.value = 0
         readyThing.put(True)
         time.sleep(1)
         readyThing.put(False)
-        initialFlag = True
+        initialFlag.value = 1
         time.sleep(1)
         readyThing.put(True)
-        initialFlag = False
+        initialFlag.value = 0
 
 
     def _set_response(self, opts): # This is just a duplicate of handle_http. rewrite this to handle both

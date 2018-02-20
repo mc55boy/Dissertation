@@ -1,5 +1,5 @@
 from threading import Thread
-from multiprocessing import Queue
+from multiprocessing import Queue, Value
 import server as server
 # import evoHandler as evo
 import time
@@ -13,14 +13,14 @@ def runServer(threadname, r, flag):
 
 def runEvo(threadname, r, flag):
     while True:
-        print(threadname + " " + str(r.get()))
-        print(flag)
+        
+        print(flag.value)
         time.sleep(0.5)
     print("Evo Thread end")
 
 
 ready = Queue()
-initialFlag = False
+initialFlag = Value('i', 1)
 
 serverThread = Thread(name="Server", target=runServer, args=("ServerThread", ready, initialFlag))
 evoThread = Thread(name="Evo", target=runEvo, args=("EvoThread", ready, initialFlag))
