@@ -5,28 +5,25 @@ import server as server
 import time
 
 
-def runServer(threadname, r):
+def runServer(threadname, r, flag):
     print(threadname + " running...")
-    server.main(r)
-    for x in range(10):
-        if x < 8:
-            r.put(True)
-        else:
-            r.put(False)
-        time.sleep(0.5)
+    server.main(r, flag)
     print("Server Thread end")
 
 
-def runEvo(threadname, r):
-    while r.get():
-        print(threadname + " True")
+def runEvo(threadname, r, flag):
+    while True:
+        print(threadname + " " + str(r.get()))
+        print(flag)
+        time.sleep(0.5)
     print("Evo Thread end")
 
 
 ready = Queue()
+initialFlag = False
 
-serverThread = Thread(name="Server", target=runServer, args=("ServerThread", ready))
-evoThread = Thread(name="Evo", target=runEvo, args=("EvoThread", ready))
+serverThread = Thread(name="Server", target=runServer, args=("ServerThread", ready, initialFlag))
+evoThread = Thread(name="Evo", target=runEvo, args=("EvoThread", ready, initialFlag))
 
 evoThread.start()
 serverThread.start()

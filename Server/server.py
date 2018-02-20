@@ -3,6 +3,7 @@ import uuid
 from http.server import BaseHTTPRequestHandler, HTTPServer
 import json
 from multiprocessing import Queue
+import time
 
 
 # POTENTIALLY IMPLEMENT FOR THE MESSAGES TO SEND BACK JSON OR XML TO MAKE IT EASIER TO PROCESS DATA
@@ -94,8 +95,16 @@ postPaths = {
 
 
 class MyHandler(BaseHTTPRequestHandler):
-    def __init__(readyThing):
-        print("Initializing")
+    def __init__(self, readyThing, initialFlag):
+        initialFlag = False
+        readyThing.put(True)
+        time.sleep(1)
+        readyThing.put(False)
+        initialFlag = True
+        time.sleep(1)
+        readyThing.put(True)
+        initialFlag = False
+
 
     def _set_response(self, opts): # This is just a duplicate of handle_http. rewrite this to handle both
         self.send_response(opts['status'])
@@ -130,9 +139,9 @@ class MyHandler(BaseHTTPRequestHandler):
                 self.send_error(404, 'File Not Found: %s' % self.path)
 
 
-def main(readyQueue):
+def main(readyQueue, initialFlag):
     try:
-        server = HTTPServer(('', 9000), MyHandler(readyQueue))
+        server = HTTPServer(('', 9000), MyHandler(readyQueue, initialFlag))
         print('started httpserver...')
         server.serve_forever()
     except KeyboardInterrupt:
