@@ -73,11 +73,6 @@ def registerClient(self):
 def ready():
     global isEvoReady
     isReady = isEvoReady.value
-    '''
-    file = open("ready.txt", "r")
-    fileReady = file.readline()
-    '''
-
     if isReady == 1:
         return {'status': 200, 'response': 'True'}
     else:
