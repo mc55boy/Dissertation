@@ -78,8 +78,6 @@ def ready():
     else:
         return {'status': 200, 'response': 'False'}
 
-    # Insert code here to see whether the server is ready to give clients models
-
 
 getPaths = {
     '/getNewID': newClient,
@@ -129,9 +127,10 @@ class MyHandler(BaseHTTPRequestHandler):
                 self.send_error(404, 'File Not Found: %s' % self.path)
 
 
-def main(initialFlag):
+def main(initialFlag, intialPop):
     try:
         global isEvoReady
+        global population
         isEvoReady = initialFlag
         server = HTTPServer(('', 9000), MyHandler)
         print('started httpserver...')
