@@ -1,8 +1,8 @@
 from __future__ import print_function
 import tensorflow as tf
-import tensorflow.contrib.slim as slim
-#from tensorflow.examples.tutorials.mnist import input_data
-from create_sentiment_features import create_feature_sets_and_labels
+# import tensorflow.contrib.slim as slim
+# from tensorflow.examples.tutorials.mnist import input_data
+# from create_sentiment_features import create_feature_sets_and_labels
 import numpy as np
 
 
@@ -11,25 +11,24 @@ import numpy as np
 
 def buildNet(inputNet, inputLayer):
 
-    #initiliase Input layer for loop use
+    # initiliase Input layer for loop use
     existingLayer_Size = inputNet["structure"]["inputLayer"]
     print("INPUT: " + str(existingLayer_Size))
 
     existingLayer = inputLayer
 
     for newLayer_Size in inputNet["structure"]["hiddenLayers"]:
-        #Create new hidden layer
+        # Create new hidden layer
         newLayer = tf.placeholder("float", [None, newLayer_Size])
-        #Build weights/connections between prev and new layer
+        # Build weights/connections between prev and new layer
         newLayer_Weights = tf.Variable(tf.random_normal([existingLayer_Size, newLayer_Size]))
-        #Build biases for new layer
+        # Build biases for new layer
         newLayer_Bias = tf.Variable(tf.random_normal([newLayer_Size]))
-        #connect new layer to prev layer using the created connections and biases
+        # connect new layer to prev layer using the created connections and biases
         newLayer = tf.add(tf.matmul(existingLayer, newLayer_Weights), newLayer_Bias)
 
         existingLayer = newLayer
         existingLayer_Size = newLayer_Size
-
 
     outputClasses = inputNet["structure"]["outputLayer"]
     print("OUTPUT: " + str(outputClasses))
@@ -38,9 +37,9 @@ def buildNet(inputNet, inputLayer):
     outputLayer = tf.matmul(existingLayer, outputWeights) + outputBias
     return outputLayer
 
+
 def loadDataset():
     #tf.data.TFRecirdDataset
-
     print("nothing")
 
 class neuralNet:
@@ -48,11 +47,11 @@ class neuralNet:
     def multilayerTrain(datasetLocation, netInput):
 
 
-        train_x, train_y, test_x, test_y = create_feature_sets_and_labels('Data/pos.txt', 'Data/neg.txt')
+        #train_x, train_y, test_x, test_y = create_feature_sets_and_labels('Data/pos.txt', 'Data/neg.txt')
 
         #Below are test hardcoded values
-        netInput["structure"]["outputLayer"] = 2
-        netInput["structure"]["inputLayer"] = len(train_x[0])
+        # netInput["structure"]["outputLayer"] = 2
+        # netInput["structure"]["inputLayer"] = len(train_x[0])
 
         #Get all parameters for the dataset
         learning_rate = netInput["parameters"]["learningRate"]
@@ -65,7 +64,7 @@ class neuralNet:
         outputClassNum = netInput["structure"]["outputLayer"]
 
         #mnist = loadDataset()
-        #mnist = input_data.read_data_sets(datasetLocation + "/", one_hot=True)
+        mnist = input_data.read_data_sets(datasetLocation + "/", one_hot=True)
 
 
         existingLayer_Size = netInput["structure"]["inputLayer"]

@@ -15,6 +15,9 @@ connectedClients = [None]
 models = [None]
 
 isEvoReady = None
+evo_conn = None
+currentPopulation = None
+useSamePop = True
 
 
 def newClient():
@@ -43,9 +46,9 @@ def whichDataset(self):
 def whichModel(self):
     content_length = int(self.headers['Content-Length'])
     post_data = self.rfile.read(content_length)
-    jsonData = json.loads(post_data.decode('utf-8'))
-    clientID = jsonData['clientID']
     try:
+        jsonData = json.loads(post_data.decode('utf-8'))
+        clientID = jsonData['clientID']
         client = next(item for item in connectedClients if item["clientID"] == clientID)
         for i, item in enumerate(connectedClients):
             if item == client:
@@ -72,11 +75,30 @@ def registerClient(self):
 
 def ready():
     global isEvoReady
+    global currentPopulation
+    global useSamePop
     isReady = isEvoReady.value
     if isReady == 1:
+        if useSamePop:
+            currentPopulation = evo_conn.recv()
+            useSamePop = False
+        for ind in currentPopulation:
+            print(ind)
         return {'status': 200, 'response': 'True'}
     else:
+        useSamePop = True
         return {'status': 200, 'response': 'False'}
+
+
+def processResult(self):
+    content_length = int(self.headers['Content-Length'])
+    post_data = self.rfile.read(content_length)
+    try:
+        jsonData = json.loads(post_data.decode('utf-8'))
+        clientID = jsonData['clientID']
+
+    except StopIteration:
+        return {'status': 500, 'response': "Couldn't post result"}
 
 
 getPaths = {
@@ -88,7 +110,8 @@ getPaths = {
 postPaths = {
     '/getModel': whichModel,
     '/getDataset': whichDataset,
-    '/registerClient': registerClient
+    '/registerClient': registerClient,
+    '/result': processResult
 }
 
 
@@ -127,11 +150,12 @@ class MyHandler(BaseHTTPRequestHandler):
                 self.send_error(404, 'File Not Found: %s' % self.path)
 
 
-def main(initialFlag, intialPop):
+def main(initialFlag, connection):
     try:
         global isEvoReady
-        global population
+        global evo_conn
         isEvoReady = initialFlag
+        evo_conn = connection
         server = HTTPServer(('', 9000), MyHandler)
         print('started httpserver...')
         server.serve_forever()
