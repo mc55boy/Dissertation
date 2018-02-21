@@ -5,30 +5,46 @@ import evoHandler as evo
 import time
 
 
-def runServer(threadname, evoReady, serverReady, evo_conn):
+def runServer(threadname, evoState, serverState, evo_conn, numClients):
     print(threadname + " running...")
-    server.main(evoReady, evo_conn)
+    server.main(evoState, serverState, evo_conn, numClients)
     print("Server Thread end")
 
 
-def runEvo(threadname, evoReady, serverReady, server_conn):
-    evoReady.value = 0
-    population = evo.createPop(784, 2)
+def setupEvo(evoState, datasetInput, numClients, server_conn):
+    evoState.value = 0
+    population = evo.createPop(datasetInput, numClients)
     for ind in population:
         print(ind)
-    time.sleep(10)
-    evoReady.value = 1
     server_conn.send(population)
+    evoState.value = 1
 
 
-def setup():
+def runEvo(threadname, evoState, serverState, server_conn, numClients):
+    numInput = 784
+    setupEvo(evoState, numInput, numClients, server_conn)
+
+    while True:
+        if serverState.value == 0:
+            print("Waiting for clients to connect...")
+            time.sleep(0.5)
+        elif serverState.value == 1:
+            print("Waiting for clients to process nets...")
+            time.sleep(0.5)
+        elif serverState.value == 2:
+            print("Other")
+
+    print("All clients Connected!")
+
+
+def setup(numClients):
 
     server_conn, evo_conn = Pipe()
-    evoReady = Value('i', 0)
-    serverReady = Value('i', 0)
+    evoState = Value('i', 0)
+    serverState = Value('i', 0)
 
-    serverThread = Thread(name="Server", target=runServer, args=("ServerThread", evoReady, serverReady, evo_conn))
-    evoThread = Thread(name="Evo", target=runEvo, args=("EvoThread", evoReady, serverReady,  server_conn))
+    serverThread = Thread(name="Server", target=runServer, args=("ServerThread", evoState, serverState, evo_conn, numClients))
+    evoThread = Thread(name="Evo", target=runEvo, args=("EvoThread", evoState, serverState,  server_conn, numClients))
 
     evoThread.start()
     serverThread.start()
@@ -36,4 +52,6 @@ def setup():
     evoThread.join()
 
 
-setup()
+numClients = 2
+
+setup(numClients)

@@ -5,7 +5,7 @@ import json
 
 
 def sendGet(url):
-    print("Sending GET")
+    print("SENDING: " + url)
     try:
         httpResponse = urllib.request.urlopen("http://localhost:9000/" + url).read()
         response = httpResponse.decode("utf-8")
@@ -45,19 +45,15 @@ def getModel(myID):
     dataToSend = json.dumps({"clientID" : myID}).encode('utf-8')
     header = {"Content-type": "application/x-www-form-urlencoded", "Accept": "text/plain"}
     success, response = sendPost(url, dataToSend, header)
-    print("RESPONSE: " + response)
     if success:
-        print(response)
-        return response
+        return response.split()
     else:
         print("FAILED")
         print(response)
         return response
 
 
-
 class HTTPHandler:
-
     def isReady():
         success, response = sendGet("ready")
         if response == "True":
@@ -87,8 +83,8 @@ class HTTPHandler:
 
     def requestModel(myID):
         nextModel = getModel(myID)
-        print("MODEL: " + nextModel)
-        urllib.request.urlretrieve("http://localhost:9000/Models/" + nextModel + ".json", "DownloadedModel/model.json")
+        return nextModel
+        #urllib.request.urlretrieve("http://localhost:9000/Models/" + nextModel + ".json", "DownloadedModel/model.json")
 
     def requestData(datasetName):
         urllib.request.urlretrieve("http://localhost:9000/Data/" + datasetName + ".tar.gz", "Data/MNIST_data.tar.gz")

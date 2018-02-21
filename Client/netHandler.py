@@ -42,6 +42,7 @@ def loadDataset():
     #tf.data.TFRecirdDataset
     print("nothing")
 
+
 class neuralNet:
 
     def multilayerTrain(datasetLocation, netInput):
@@ -54,9 +55,12 @@ class neuralNet:
         # netInput["structure"]["inputLayer"] = len(train_x[0])
 
         #Get all parameters for the dataset
-        learning_rate = netInput["parameters"]["learningRate"]
-        training_epochs = netInput["parameters"]["training_epochs"]
-        batch_size = netInput["parameters"]["batch_size"]
+        # learning_rate = netInput["parameters"]["learningRate"]
+        learning_rate = 0.005
+        # training_epochs = netInput["parameters"]["training_epochs"]
+        training_epochs = 10
+        # batch_size = netInput["parameters"]["batch_size"]
+        batch_size = 100
         display_step = 1
 
         inputSize = netInput["structure"]["inputLayer"]

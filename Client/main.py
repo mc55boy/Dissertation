@@ -2,7 +2,6 @@ import httpClient as HTTPServices
 import os
 import tarfile
 import netHandler as netHandler
-import JSONHandler as JSONHandler
 import time
 
 myID = None
@@ -44,19 +43,19 @@ def run():
                 datasetLocation = "Data/" + datasetName
                 if not os.path.exists(datasetLocation):
                     downloadData(datasetName)
-                HTTPServices.HTTPHandler.requestModel(myID)
+                netModel = HTTPServices.HTTPHandler.requestModel(myID)
             else:
                 print("Failed to get Dataset name")
             print("Sleeping....")
             time.sleep(1000)
-            netInput = JSONHandler.JSONHandler.readJSONModel("DownloadedModel/model.json")
-            #accuracy = netHandler.neuralNet.multilayerTrain(datasetLocation, netInput)
-            netInput["results"]["accuracy"] = str(90);
+            #netInput = JSONHandler.JSONHandler.readJSONModel("DownloadedModel/model.json")
+            accuracy = netHandler.neuralNet.multilayerTrain(datasetLocation, netModel)
+            netInput["results"]["accuracy"] = str(90)
             print(netInput["results"]["accuracy"])
-            JSONHandler.JSONHandler.writeToJSON("DownloadedModel/model.json", netInput)
+            #JSONHandler.JSONHandler.writeToJSON("DownloadedModel/model.json", netInput)
         else:
             print("Not Ready...")
-            time.sleep(0.3)
+            time.sleep(0.5)
 
 
 if setup():

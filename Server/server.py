@@ -2,22 +2,23 @@ from os import curdir, sep
 import uuid
 from http.server import BaseHTTPRequestHandler, HTTPServer
 import json
-from multiprocessing import Value
-import time
 
 
 # POTENTIALLY IMPLEMENT FOR THE MESSAGES TO SEND BACK JSON OR XML TO MAKE IT EASIER TO PROCESS DATA
 # ON THE CLIENT END
 
+# Global variables
 
 datasetInUse = None
 connectedClients = [None]
-models = [None]
 
-isEvoReady = None
+evoState = None
+serverState = None
 evo_conn = None
 currentPopulation = None
 useSamePop = True
+numClients = None
+registeredClients = 0
 
 
 def newClient():
@@ -43,7 +44,14 @@ def whichDataset(self):
     return response
 
 
-def whichModel(self):
+def transformModel(ind):
+    returnList = []
+    for item in ind:
+        returnList.append(item)
+    return ' '.join(str(e) for e in returnList)
+
+
+def getModel(self):
     content_length = int(self.headers['Content-Length'])
     post_data = self.rfile.read(content_length)
     try:
@@ -52,12 +60,14 @@ def whichModel(self):
         client = next(item for item in connectedClients if item["clientID"] == clientID)
         for i, item in enumerate(connectedClients):
             if item == client:
-                return {'status': 200, 'response': "1"}
+                # sendModel = transformModel(currentPopulation[i])
+                return {'status': 200, 'response': str(transformModel(currentPopulation[i]))}
     except StopIteration:
         return {'status': 500, 'response': "Client not found"}
 
 
 def registerClient(self):
+    global connectedClients
     content_length = int(self.headers['Content-Length'])
     post_data = self.rfile.read(content_length)
     jsonData = json.loads(post_data.decode('utf-8'))
@@ -68,17 +78,24 @@ def registerClient(self):
             if item == client:
                 client['Registered'] = True
                 connectedClients[i] = client
+
+                global registeredClients
+                registeredClients += 1
+                if registeredClients == numClients:
+                    global serverState
+                    serverState.value = 1
+
                 return {'status': 200, 'response': "Client Registered"}
+        return {'status': 500, 'response': "Could not find client ID"}
     except StopIteration:
         return {'status': 500, 'response': "Client not found"}
 
 
 def ready():
-    global isEvoReady
+    global evoState
     global currentPopulation
     global useSamePop
-    isReady = isEvoReady.value
-    if isReady == 1:
+    if evoState.value == 1:
         if useSamePop:
             currentPopulation = evo_conn.recv()
             useSamePop = False
@@ -108,7 +125,7 @@ getPaths = {
 }
 
 postPaths = {
-    '/getModel': whichModel,
+    '/getModel': getModel,
     '/getDataset': whichDataset,
     '/registerClient': registerClient,
     '/result': processResult
@@ -127,6 +144,7 @@ class MyHandler(BaseHTTPRequestHandler):
     def do_POST(self):
         if self.path in postPaths:
             # Serve PUT request
+
             self._set_response(postPaths[self.path](self))
         else:
             self._set_response({'status': 404, 'response': 'No such page'})
@@ -150,12 +168,16 @@ class MyHandler(BaseHTTPRequestHandler):
                 self.send_error(404, 'File Not Found: %s' % self.path)
 
 
-def main(initialFlag, connection):
+def main(evoReady, inputServerState, connection, inputNumClients):
     try:
-        global isEvoReady
+        global evoState
+        global serverState
         global evo_conn
-        isEvoReady = initialFlag
+        global numClients
+        serverState = inputServerState
+        evoState = evoReady
         evo_conn = connection
+        numClients = inputNumClients
         server = HTTPServer(('', 9000), MyHandler)
         print('started httpserver...')
         server.serve_forever()
