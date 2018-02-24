@@ -1,13 +1,45 @@
 from __future__ import print_function
 import tensorflow as tf
-# import tensorflow.contrib.slim as slim
-# from tensorflow.examples.tutorials.mnist import input_data
-# from create_sentiment_features import create_feature_sets_and_labels
-import numpy as np
 
 
+def loadMNIST(datasetLocation):
 
+    MNIST_Files = ["train-images.idx3-ubyte", "train-labels.idx1-ubyte", "t10k-images.idx3-ubyte", "t10k-labels.idx1-ubyte"]
+    MNIST_Headers = [4, 2, 4, 2]
+    totalDataSet = []
+    for datasetNum in range(len(MNIST_Files)):
+        dataLocation = datasetLocation + MNIST_Files[datasetNum]
+        print("Reading " + MNIST_Files[datasetNum] + "...")
+        with open(dataLocation, "rb") as f:
+            metaData = []
+            currData = []
+            for i in range(MNIST_Headers[datasetNum]):
+                metaData.append(int.from_bytes(f.read(4), byteorder='big'))
 
+            if MNIST_Headers[datasetNum] == 2:
+                numBytes = 1
+            else:
+                numBytes = metaData[2] * metaData[3]
+            rawBytes = f.read(numBytes)
+            while rawBytes:
+                byteList = list(rawBytes)
+                currData.append(byteList)
+                rawBytes = f.read(numBytes)
+            totalDataSet.append(currData)
+        print("Done")
+    '''
+    labelSets = [1, 3]
+    for setNum in labelSets:
+        flat_list = []
+        for sublist in totalDataSet[setNum]:
+            for item in sublist:
+                flat_list.append(item)
+        totalDataSet[setNum] = flat_list
+    '''
+    # print(totalDataSet[3])
+
+    print(str(len(totalDataSet[0])) + " " + str(len(totalDataSet[1])) + " " + str(len(totalDataSet[2])) + " " + str(len(totalDataSet[3])))
+    return totalDataSet[0], totalDataSet[1], totalDataSet[2], totalDataSet[3]
 
 def buildNet(inputNet, inputLayer):
 
@@ -38,23 +70,14 @@ def buildNet(inputNet, inputLayer):
     return outputLayer
 
 
-def loadDataset():
-    #tf.data.TFRecirdDataset
-    print("nothing")
-
 
 class neuralNet:
 
-    def multilayerTrain(datasetLocation, netInput):
+    def multilayerTrain(datasetLocation, layerInput):
 
+        netInput = {"structure": {"outputLayer": 10, "inputLayer": 784, "hiddenLayers": [784, 392, 191, 90]}}
+        train_x, train_y, test_x, test_y = loadMNIST(datasetLocation)
 
-        #train_x, train_y, test_x, test_y = create_feature_sets_and_labels('Data/pos.txt', 'Data/neg.txt')
-
-        #Below are test hardcoded values
-        # netInput["structure"]["outputLayer"] = 2
-        # netInput["structure"]["inputLayer"] = len(train_x[0])
-
-        #Get all parameters for the dataset
         # learning_rate = netInput["parameters"]["learningRate"]
         learning_rate = 0.005
         # training_epochs = netInput["parameters"]["training_epochs"]
@@ -62,16 +85,9 @@ class neuralNet:
         # batch_size = netInput["parameters"]["batch_size"]
         batch_size = 100
         display_step = 1
-
         inputSize = netInput["structure"]["inputLayer"]
-        #inputSize = len(train_x[0]) #Give size of specific tensor input
         outputClassNum = netInput["structure"]["outputLayer"]
 
-        #mnist = loadDataset()
-        mnist = input_data.read_data_sets(datasetLocation + "/", one_hot=True)
-
-
-        existingLayer_Size = netInput["structure"]["inputLayer"]
         inputLayer = tf.placeholder("float", [None, inputSize])
         outputLayer = tf.placeholder("float", [None, outputClassNum])
         logits = buildNet(netInput, inputLayer)
@@ -90,16 +106,15 @@ class neuralNet:
             # Training cycle
             for epoch in range(training_epochs):
                 avg_cost = 0.
-                #total_batch = int(mnist.train.num_examples/batch_size)
                 total_batch = int(len(train_x)/batch_size)
                 # Loop over all batches
-                #for i in range(total_batch):
+                # for i in range(total_batch):
                 i = 0
                 while i < len(train_x):
                     start = i
                     end = i + batch_size
-                    batch_x = np.array(train_x[start:end])
-                    batch_y = np.array(train_y[start:end])
+                    batch_x = train_x[start:end]
+                    batch_y = train_y[start:end]
                     #batch_x, batch_y = mnist.train.next_batch(batch_size)
                     # Run optimization op (backprop) and cost op (to get loss value)
                     _, c = sess.run([train_op, loss_op], feed_dict={inputLayer: batch_x,
@@ -121,3 +136,6 @@ class neuralNet:
             accuracyOutput = accuracy.eval({inputLayer: test_x, outputLayer: test_y})
             print("Accuracy:", accuracyOutput)
             return accuracyOutput
+
+
+neuralNet.multilayerTrain("Data/MNIST_data/", [2, 784, 392, 191, 90])
