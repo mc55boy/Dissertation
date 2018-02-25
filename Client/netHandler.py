@@ -1,6 +1,8 @@
 from __future__ import print_function
 import tensorflow as tf
 import time
+import sys
+import array
 
 
 def loadMNIST(datasetLocation):
@@ -23,9 +25,13 @@ def loadMNIST(datasetLocation):
                 numBytes = metaData[2] * metaData[3]
             rawBytes = f.read(numBytes)
             while rawBytes:
-                byteList = list(rawBytes)
-                currData.append(byteList)
+                # byteList =
+                #floatList = list(map(float, list(rawBytes)))
+                floatList = array.array('f', rawBytes)
+                # floatList = struct.unpack('f', rawBytes)
+                currData.append(floatList.tolist())
                 rawBytes = f.read(numBytes)
+            print(currData[0])
             totalDataSet.append(currData)
         print("Done")
 
@@ -38,13 +44,13 @@ def loadMNIST(datasetLocation):
                 flat_list.append(item)
         totalDataSet[setNum] = flat_list
     '''
-    first = totalDataSet[1][0][0]
+
     labelSets = [1, 3]
     for setNum in labelSets:
         tempList = []
         for sublist in totalDataSet[setNum]:
-            flat_list = [0] * 10
-            flat_list[sublist[0]] = 1
+            flat_list = [0.0] * 10
+            flat_list[sublist[0]] = 1.0
             tempList.append(flat_list)
         totalDataSet[setNum] = tempList
     print(str(len(totalDataSet[0])) + " " + str(len(totalDataSet[1])) + " " + str(len(totalDataSet[2])) + " " + str(len(totalDataSet[3])))
@@ -60,6 +66,7 @@ def buildNet(inputNet, inputLayer):
 
     for newLayer_Size in inputNet["structure"]["hiddenLayers"]:
         # Create new hidden layer
+        # newLayer = tf.placeholder("float", [None, newLayer_Size])
         newLayer = tf.placeholder("float", [None, newLayer_Size])
         # Build weights/connections between prev and new layer
         newLayer_Weights = tf.Variable(tf.random_normal([existingLayer_Size, newLayer_Size]))
