@@ -27,9 +27,13 @@ def loadMNIST(datasetLocation):
             while rawBytes:
                 # byteList =
                 #floatList = list(map(float, list(rawBytes)))
-                floatList = array.array('f', rawBytes)
-                # floatList = struct.unpack('f', rawBytes)
-                currData.append(floatList.tolist())
+                if MNIST_Headers[datasetNum] == 2:
+                    numBytes = 1
+                else:
+                    floatList = array.array('f', rawBytes)
+                    # floatList = struct.unpack('f', rawBytes)
+                    currData.append(floatList.tolist())
+
                 rawBytes = f.read(numBytes)
             print(currData[0])
             totalDataSet.append(currData)
