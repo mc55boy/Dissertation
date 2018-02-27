@@ -29,7 +29,7 @@ def evalulateInd(gen, ind):
 
 def mutate(ind):
     mutant = toolbox.clone(ind)
-    ind2, = tools.mutGaussian(mutant, mu=0.1, sigma=0.2, indpb=0.2)
+    ind2, = tools.mutGaussian(mutant, mu=0.1, sigma=0.2, indpb=0.5)
     del mutant.fitness.values
     print("1: " + str(ind))
     print("2: " + str(ind2))
