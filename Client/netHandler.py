@@ -25,17 +25,8 @@ def loadMNIST(datasetLocation):
                 numBytes = metaData[2] * metaData[3]
             rawBytes = f.read(numBytes)
             while rawBytes:
-                # byteList =
-                #floatList = list(map(float, list(rawBytes)))
-                if MNIST_Headers[datasetNum] == 2:
-                    numBytes = 1
-                else:
-                    floatList = array.array('f', rawBytes)
-                    # floatList = struct.unpack('f', rawBytes)
-                    currData.append(floatList.tolist())
-
+                currData.append(list(rawBytes))
                 rawBytes = f.read(numBytes)
-            print(currData[0])
             totalDataSet.append(currData)
         print("Done")
 
@@ -53,7 +44,7 @@ def loadMNIST(datasetLocation):
     for setNum in labelSets:
         tempList = []
         for sublist in totalDataSet[setNum]:
-            flat_list = [0.0] * 10
+            flat_list = [0] * 10
             flat_list[sublist[0]] = 1.0
             tempList.append(flat_list)
         totalDataSet[setNum] = tempList
