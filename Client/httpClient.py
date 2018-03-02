@@ -46,6 +46,7 @@ def getModel(myID):
     header = {"Content-type": "application/x-www-form-urlencoded", "Accept": "text/plain"}
     success, response = sendPost(url, dataToSend, header)
     if success:
+        print("HERE: " + str(response))
         return response.split()
     else:
         print("FAILED")

@@ -1,1 +1,0 @@
-{"structure": {"hiddenLayers": [20], "outputLayer": 10, "inputLayer": 784}, "dataSet": "MNIST", "parameters": {"momentum": 0.5, "training_epochs": 1, "weightDecay": true, "learningRate": 0.001, "batch_size": 100}, "results": {"accuracy": "0.5283"}}

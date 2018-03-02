@@ -85,7 +85,7 @@ class neuralNet:
 
     def multilayerTrain(datasetLocation, layerInput):
 
-        netInput = {"structure": {"outputLayer": 10, "inputLayer": 784, "hiddenLayers": [10, 10]}}
+        netInput = {"structure": {"outputLayer": 10, "inputLayer": 784, "hiddenLayers": layerInput}}
         train_x, train_y, test_x, test_y = loadMNIST(datasetLocation)
 
         # learning_rate = netInput["parameters"]["learningRate"]
@@ -163,4 +163,4 @@ class neuralNet:
             return accuracyOutput
 
 
-neuralNet.multilayerTrain("Data/MNIST_data/", [2, 784, 392, 191, 90])
+#neuralNet.multilayerTrain("Data/MNIST_data/", [2, 784, 392, 191, 90])

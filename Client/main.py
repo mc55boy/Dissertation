@@ -46,11 +46,14 @@ def run():
                 netModel = HTTPServices.HTTPHandler.requestModel(myID)
             else:
                 print("Failed to get Dataset name")
-            print("Sleeping....")
-            time.sleep(1000)
+
+            netModel = list(map(int, netModel))
+            print("NETMODEL: " + str(netModel))
             #netInput = JSONHandler.JSONHandler.readJSONModel("DownloadedModel/model.json")
             accuracy = netHandler.neuralNet.multilayerTrain(datasetLocation, netModel)
-            netInput["results"]["accuracy"] = str(90)
+            print("ACCURACY: " + str(accuracy))
+            netInput = {"results": {"accuracy": 0}}
+            netInput["results"]["accuracy"] = accuracy
             print(netInput["results"]["accuracy"])
             #JSONHandler.JSONHandler.writeToJSON("DownloadedModel/model.json", netInput)
         else:

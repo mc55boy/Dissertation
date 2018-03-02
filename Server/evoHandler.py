@@ -17,14 +17,12 @@ def generateInd(icls, maxLayers, maxNeurons):
     return icls(genome)
 
 
-def createPop(maxNeurons, numClients):
+def createPop(maxNeurons, maxLayers, numClients):
     creator.create("FitnessMax", base.Fitness, weights=(1.0, ))
     creator.create("Individual", list, fitness=creator.FitnessMax)
-
-    toolbox.register("individual", generateInd, creator.Individual, 5, 784)
-
+    toolbox.register("individual", generateInd, creator.Individual, maxLayers, maxNeurons)
     toolbox.register("population", tools.initRepeat, list, toolbox.individual)
-    pop = toolbox.population(n=numClients)
+    pop = toolbox.population(numClients)
     print("Population Created...")
     return pop
 
@@ -34,47 +32,39 @@ def evalulateInd(gen, ind):
     return allResults[gen][ind]
 
 
-def mutate(ind):
-    mutant = toolbox.clone(ind)
-    numLayers = mutant[0]
-    layers = mutant[1:]
-    tempList = []
+def assignFitness(pop, fitness):
+    for ind in range(len(pop)):
+        pop[ind].fitness.value = fitness[ind]
+    return pop
+
+
+def mutate(ind, maxChange):
+    ind = toolbox.clone(ind)
     lowList = []
     highList = []
-    tempList = mutant
-    if tempList[0] > 1:
-        lowList.append(tempList[0] - 1)
-    else:
-        lowList.append(1)
-    if tempList[0] < 5:
-        highList.append(tempList[0] + 1)
-    else:
-        highList.append(5)
-
-    for x in tempList[1:]:
-        if x > 5:
-            lowList.append(x - 5)
+    for x in ind:
+        if x > maxChange:
+            lowList.append(x - maxChange)
         else:
             lowList.append(1)
-        highList.append(x + 5)
+        highList.append(x + maxChange)
 
-    newNeuron, = tools.mutUniformInt(layers, lowList[1:], highList[1:], 0.5)
-    newLayers, other2 = tools.mutUniformInt(numLayers, lowList[0], highList[0], 0.1)
-    del mutant.fitness.values
-    print("Original:  " + str(ind))
-    print("newNeuron: " + str(newNeuron))
-    print("newLayers: " + str(newNeuron))
-    print("Mutant:    " + str(mutant))
-
+    ind2, = tools.mutUniformInt(ind, lowList, highList, 0.5)
+    # del mutant.fitness.values
+    print("newNeuron: " + str(ind2))
+    print()
+    return ind2
 
 
 toolbox.register("evaluate", evalulateInd)
 
-population = createPop(784, 20)
+# population = createPop(784, 5, 3)
 
-
+'''
 for gen in range(3):
     for ind in range(3):
         fitness = evalulateInd(gen, ind)
+        print("Original:  " + str(population[ind]))
         population[ind].fitness.value = fitness
-        mutate(population[ind])
+        population[ind] = mutate(population[ind], 20)
+'''

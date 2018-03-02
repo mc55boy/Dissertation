@@ -13,24 +13,35 @@ def runServer(threadname, evoState, serverState, evo_conn, numClients):
 
 def setupEvo(evoState, datasetInput, numClients, server_conn):
     evoState.value = 0
-    population = evo.createPop(datasetInput, numClients)
+    maxLayers = 3
+    # createPop(maxNeurons, maxLayers, numClients):
+    population = evo.createPop(datasetInput, maxLayers, numClients)
     for ind in population:
         print(ind)
     server_conn.send(population)
     evoState.value = 1
 
 
+def coreWait(counter, message):
+    b = message + "." * counter
+    print(b, end="\r")
+    counter += 1
+    if counter == 5:
+        counter = 0
+    time.sleep(0.5)
+    print(" " * 50, end="\r")
+    return counter
+
+
 def runEvo(threadname, evoState, serverState, server_conn, numClients):
     numInput = 784
     setupEvo(evoState, numInput, numClients, server_conn)
-
+    counter = 0
     while True:
         if serverState.value == 0:
-            print("Waiting for clients to connect...")
-            time.sleep(0.5)
+            counter = coreWait(counter, "Waiting for clients")
         elif serverState.value == 1:
-            print("Waiting for clients to process nets...")
-            time.sleep(0.5)
+            counter = coreWait(counter, "Waiting for clients to process nets")
         elif serverState.value == 2:
             print("Other")
 
@@ -52,6 +63,6 @@ def setup(numClients):
     evoThread.join()
 
 
-numClients = 2
+numClients = 1
 
 setup(numClients)
