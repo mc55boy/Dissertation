@@ -1,11 +1,11 @@
 import random
-
-from deap import algorithms
 from deap import base
 from deap import creator
 from deap import tools
+import uuid
 
 toolbox = base.Toolbox()
+population = list()
 
 
 # At the moment all it does is generate a random number of layers filled with neurons
@@ -18,13 +18,23 @@ def generateInd(icls, maxLayers, maxNeurons):
 
 
 def createPop(maxNeurons, maxLayers, numClients):
+    global population
     creator.create("FitnessMax", base.Fitness, weights=(1.0, ))
     creator.create("Individual", list, fitness=creator.FitnessMax)
     toolbox.register("individual", generateInd, creator.Individual, maxLayers, maxNeurons)
     toolbox.register("population", tools.initRepeat, list, toolbox.individual)
     pop = toolbox.population(numClients)
     print("Population Created...")
-    return pop
+    for ind in pop:
+        population.append({"Model": ind, "ModelID": uuid.uuid4().hex})
+    return population
+
+
+def getNextGeneration(inputPop):
+    inputGeneration = list()
+    for ind in inputPop:
+        inputGeneration.append(ind['Model'])
+        print(ind['Result'])
 
 
 def evalulateInd(gen, ind):

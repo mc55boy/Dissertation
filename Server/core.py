@@ -20,6 +20,7 @@ def setupEvo(evoState, datasetInput, numClients, server_conn):
         print(ind)
     server_conn.send(population)
     evoState.value = 1
+    return population
 
 
 def coreWait(counter, message):
@@ -35,7 +36,7 @@ def coreWait(counter, message):
 
 def runEvo(threadname, evoState, serverState, server_conn, numClients):
     numInput = 784
-    setupEvo(evoState, numInput, numClients, server_conn)
+    originalPop = setupEvo(evoState, numInput, numClients, server_conn)
     counter = 0
     while True:
         if serverState.value == 0:
@@ -43,9 +44,8 @@ def runEvo(threadname, evoState, serverState, server_conn, numClients):
         elif serverState.value == 1:
             counter = coreWait(counter, "Waiting for clients to process nets")
         elif serverState.value == 2:
-            print("Other")
-
-    print("All clients Connected!")
+            population = server_conn.recv()
+            evo.getNextGeneration(population)
 
 
 def setup(numClients):

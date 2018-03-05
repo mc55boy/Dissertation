@@ -33,32 +33,48 @@ def setup():
         return False
 
 
+def clientWait(counter, message):
+    b = message + "." * counter
+    print(b, end="\r")
+    counter += 1
+    if counter == 5:
+        counter = 0
+    time.sleep(0.5)
+    print(" " * 50, end="\r")
+    return counter
+
+
 def run():
+
+    counter = 0
 
     while True:
 
         if HTTPServices.HTTPHandler.isReady():
+            counter = 0
             success, datasetName = HTTPServices.HTTPHandler.whichDataset(myID)
             if success:
                 datasetLocation = "Data/" + datasetName
                 if not os.path.exists(datasetLocation):
                     downloadData(datasetName)
                 netModel = HTTPServices.HTTPHandler.requestModel(myID)
+                netModel = list(map(int, netModel))
+
+                accuracy = 0.8874
+                netInput = {"clientID": myID, "results": {"accuracy": 0}}
+                netInput["results"]["accuracy"] = accuracy
+                print(netInput["results"]["accuracy"])
+                if HTTPServices.HTTPHandler.sendResults(netInput):
+                    print("Getting next model...")
+                else:
+                    print("Something went wrong...")
+                time.sleep(10)
             else:
                 print("Failed to get Dataset name")
-
-            netModel = list(map(int, netModel))
-            print("NETMODEL: " + str(netModel))
-            #netInput = JSONHandler.JSONHandler.readJSONModel("DownloadedModel/model.json")
-            accuracy = netHandler.neuralNet.multilayerTrain(datasetLocation, netModel)
-            print("ACCURACY: " + str(accuracy))
-            netInput = {"results": {"accuracy": 0}}
-            netInput["results"]["accuracy"] = accuracy
-            print(netInput["results"]["accuracy"])
             #JSONHandler.JSONHandler.writeToJSON("DownloadedModel/model.json", netInput)
         else:
-            print("Not Ready...")
-            time.sleep(0.5)
+            clientWait(counter, "Waiting for server to process new models")
+
 
 
 if setup():

@@ -96,7 +96,7 @@ def assignModels():
     print("Assigning Models")
     pop = evo_conn.recv()
     for ind in pop:
-        newInd = {"Model": ind, "Processed": False, "clientID": None, "Result": 0}
+        newInd = {"Model": ind["Model"], "ModelID": ind["ModelID"], "Processed": False, "clientID": None, "Result": 0}
         currentPopulation.append(newInd)
         print(currentPopulation)
     for client in range(len(connectedClients)):
@@ -120,16 +120,21 @@ def ready():
 
 
 def processResult(self):
+    global currentPopulation
     content_length = int(self.headers['Content-Length'])
     post_data = self.rfile.read(content_length)
     try:
         jsonData = json.loads(post_data.decode('utf-8'))
         clientID = jsonData['clientID']
+        result = jsonData['results']['accuracy']
         ind = next(item for item in currentPopulation if item["clientID"] == clientID)
         for i, item in enumerate(currentPopulation):
             if item == ind:
-                ind['Registered'] = True
-                connectedClients[i] = ind
+                ind['Result'] = result
+                ind['Processed'] = True
+                currentPopulation[i] = ind
+                serverState.value = 2
+                evo_conn.send(currentPopulation)
                 return {'status': 200, 'response': "Result Recorded"}
     except StopIteration:
         return {'status': 500, 'response': "Couldn't post result"}

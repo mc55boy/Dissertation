@@ -62,6 +62,14 @@ class HTTPHandler:
         else:
             return False
 
+    def sendResults(resultInfo):
+        dataToSend = json.dumps(resultInfo).encode('utf-8')
+        url = "/result"
+        header = {"Content-type": "application/x-www-form-urlencoded", "Accept": "text/plain"}
+        success, response = sendPost(url, dataToSend, header)
+        print(response)
+        return success
+
 
 
     def connectToServer():
