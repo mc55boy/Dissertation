@@ -71,10 +71,8 @@ def run():
                 time.sleep(10)
             else:
                 print("Failed to get Dataset name")
-            #JSONHandler.JSONHandler.writeToJSON("DownloadedModel/model.json", netInput)
         else:
             clientWait(counter, "Waiting for server to process new models")
-
 
 
 if setup():

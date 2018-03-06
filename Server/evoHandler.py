@@ -30,22 +30,31 @@ def createPop(maxNeurons, maxLayers, numClients):
     return population
 
 
-def getNextGeneration(inputPop):
-    inputGeneration = list()
-    for ind in inputPop:
-        inputGeneration.append(ind['Model'])
-        print(ind['Result'])
+def getNextGeneration(originalPop, processedPop):
+    # inputGeneration = list()
+    lenOrg = len(originalPop)
+    lenPrc = len(processedPop)
+    if lenOrg == lenPrc:
+        for p in range(lenPrc):
+            for o in range(lenOrg):
+                if processedPop[p]['ModelID'] == originalPop[o]['ModelID']:
+                    print(processedPop[p]['Result'])
+                    fitness = processedPop[p]['Result']
+                    originalPop[o]['Model'].fitness.value = fitness
+    else:
+        print("Amount of processed nets doesn't match original population")
+    mutatePopulation(originalPop)
+    print(str(originalPop[0]['Model'].fitness.value))
+    return originalPop, processedPop
 
 
-def evalulateInd(gen, ind):
-    allResults = [[34.0, 45.0, 22.0], [44.0, 47.0, 39.0], [51.0, 45.0, 41.0]]
-    return allResults[gen][ind]
-
-
-def assignFitness(pop, fitness):
-    for ind in range(len(pop)):
-        pop[ind].fitness.value = fitness[ind]
-    return pop
+def mutatePopulation(population):
+    mutatedPop = list()
+    for ind in population:
+        print(ind['Model'])
+        mutatedPop.append(mutate(ind['Model'], 20))
+    for ind in mutatedPop:
+        print(ind)
 
 
 def mutate(ind, maxChange):
@@ -60,21 +69,5 @@ def mutate(ind, maxChange):
         highList.append(x + maxChange)
 
     ind2, = tools.mutUniformInt(ind, lowList, highList, 0.5)
-    # del mutant.fitness.values
-    print("newNeuron: " + str(ind2))
-    print()
+    del ind2.fitness.values
     return ind2
-
-
-toolbox.register("evaluate", evalulateInd)
-
-# population = createPop(784, 5, 3)
-
-'''
-for gen in range(3):
-    for ind in range(3):
-        fitness = evalulateInd(gen, ind)
-        print("Original:  " + str(population[ind]))
-        population[ind].fitness.value = fitness
-        population[ind] = mutate(population[ind], 20)
-'''
