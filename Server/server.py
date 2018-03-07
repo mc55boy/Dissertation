@@ -60,8 +60,6 @@ def getModel(self):
         client = next(item for item in connectedClients if item["clientID"] == clientID)
         for i, item in enumerate(connectedClients):
             if item == client:
-                # sendModel = transformModel(currentPopulation[i])
-                print("HERE: " + str(currentPopulation[i]))
                 return {'status': 200, 'response': transformModel(currentPopulation[i]["Model"])}
     except StopIteration:
         return {'status': 500, 'response': "Client not found"}
@@ -110,7 +108,7 @@ def ready():
     global currentPopulation
     global useSamePop
     if evoState.value == 1:
-        if useSamePop:
+        if useSamePop or serverState.value == 2:
             assignModels()
             useSamePop = False
         return {'status': 200, 'response': 'True'}
@@ -155,6 +153,9 @@ postPaths = {
 
 
 class MyHandler(BaseHTTPRequestHandler):
+
+    def log_message(self, format, *args):
+        return
 
     def _set_response(self, opts): # This is just a duplicate of handle_http. rewrite this to handle both
         self.send_response(opts['status'])

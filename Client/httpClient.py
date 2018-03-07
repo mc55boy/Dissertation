@@ -1,11 +1,9 @@
 import urllib.parse
 import urllib.request
-#import urllib.request
 import json
 
 
 def sendGet(url):
-    print("SENDING: " + url)
     try:
         httpResponse = urllib.request.urlopen("http://localhost:9000/" + url).read()
         response = httpResponse.decode("utf-8")
@@ -46,10 +44,9 @@ def getModel(myID):
     header = {"Content-type": "application/x-www-form-urlencoded", "Accept": "text/plain"}
     success, response = sendPost(url, dataToSend, header)
     if success:
-        print("HERE: " + str(response))
+        print(response)
         return response.split()
     else:
-        print("FAILED")
         print(response)
         return response
 
@@ -103,7 +100,3 @@ class HTTPHandler:
         url = "/getDataset"
         header = {"Content-type": "application/x-www-form-urlencoded", "Accept": "text/plain"}
         return sendPost(url, dataToSend, header)
-
-        #httpResponse = urllib.request.urlopen("http://localhost:9000/getDataset").read()
-        #datasetName = httpResponse.decode("utf-8")
-        #return datasetName

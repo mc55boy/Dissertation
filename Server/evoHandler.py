@@ -31,30 +31,32 @@ def createPop(maxNeurons, maxLayers, numClients):
 
 
 def getNextGeneration(originalPop, processedPop):
-    # inputGeneration = list()
     lenOrg = len(originalPop)
     lenPrc = len(processedPop)
     if lenOrg == lenPrc:
         for p in range(lenPrc):
             for o in range(lenOrg):
                 if processedPop[p]['ModelID'] == originalPop[o]['ModelID']:
-                    print(processedPop[p]['Result'])
                     fitness = processedPop[p]['Result']
                     originalPop[o]['Model'].fitness.value = fitness
+                    break
     else:
         print("Amount of processed nets doesn't match original population")
-    mutatePopulation(originalPop)
-    print(str(originalPop[0]['Model'].fitness.value))
-    return originalPop, processedPop
+    mutatedPop = mutatePopulation(originalPop)
+    return originalPop, mutatedPop
 
 
 def mutatePopulation(population):
     mutatedPop = list()
+    print()
     for ind in population:
         print(ind['Model'])
-        mutatedPop.append(mutate(ind['Model'], 20))
-    for ind in mutatedPop:
-        print(ind)
+        tempInd = mutate(ind['Model'], 20)
+        ind['Model'] = tempInd
+        print(tempInd)
+        mutatedPop.append(ind)
+    print()
+    return mutatedPop
 
 
 def mutate(ind, maxChange):
