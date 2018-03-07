@@ -33,11 +33,6 @@ def newClient():
     return {'status': 200, 'response': str(newID)}
 
 
-def testFunction():
-    response = {'status': 200, 'response': 'Test function called'}
-    return response
-
-
 def whichDataset(self):
     datasetInUse = "MNIST_data/"
     response = {'status': 200, 'response': datasetInUse}
@@ -54,6 +49,7 @@ def transformModel(ind):
 def getModel(self):
     content_length = int(self.headers['Content-Length'])
     post_data = self.rfile.read(content_length)
+    global connectedClients
     try:
         jsonData = json.loads(post_data.decode('utf-8'))
         clientID = jsonData['clientID']
@@ -93,6 +89,8 @@ def registerClient(self):
 def assignModels():
     print("Assigning Models")
     pop = evo_conn.recv()
+    global currentPopulation
+    currentPopulation = list()
     for ind in pop:
         newInd = {"Model": ind["Model"], "ModelID": ind["ModelID"], "Processed": False, "clientID": None, "Result": 0}
         currentPopulation.append(newInd)
@@ -124,7 +122,7 @@ def processResult(self):
     try:
         jsonData = json.loads(post_data.decode('utf-8'))
         clientID = jsonData['clientID']
-        result = jsonData['results']['accuracy']
+        result = float(jsonData['results']['accuracy'])
         ind = next(item for item in currentPopulation if item["clientID"] == clientID)
         for i, item in enumerate(currentPopulation):
             if item == ind:
@@ -140,7 +138,6 @@ def processResult(self):
 
 getPaths = {
     '/getNewID': newClient,
-    '/testFunction': testFunction,
     '/ready': ready
 }
 

@@ -13,7 +13,7 @@ def runServer(threadname, evoState, serverState, evo_conn, numClients):
 
 def setupEvo(evoState, datasetInput, numClients, server_conn):
     evoState.value = 0
-    maxLayers = 20
+    maxLayers = 1
     # createPop(maxNeurons, maxLayers, numClients):
     population = evo.createPop(datasetInput, maxLayers, numClients)
     for ind in population:
@@ -46,6 +46,8 @@ def runEvo(threadname, evoState, serverState, server_conn, numClients):
         elif serverState.value == 2:
             processedPop = server_conn.recv()
             originalPop, population = evo.getNextGeneration(originalPop, processedPop)
+            print()
+            print(originalPop)
             print(population)
             server_conn.send(population)
             evoState.value = 1
@@ -66,6 +68,6 @@ def setup(numClients):
     evoThread.join()
 
 
-numClients = 1
+numClients = 2
 
 setup(numClients)
