@@ -42,14 +42,17 @@ def runEvo(threadname, evoState, serverState, server_conn, numClients):
         if serverState.value == 0:
             counter = coreWait(counter, "Waiting for clients")
         elif serverState.value == 1:
+            evoState.value = 0
             counter = coreWait(counter, "Waiting for clients to process nets")
         elif serverState.value == 2:
             processedPop = server_conn.recv()
-            originalPop, population = evo.getNextGeneration(originalPop, processedPop)
+            newPopulation = evo.getNextGeneration(originalPop, processedPop)
             print()
+            print("!!!!!!!!!!!!!!!!NEW POP!!!!!!!!!!!!!!!!!")
             print(originalPop)
-            print(population)
-            server_conn.send(population)
+            print(newPopulation)
+            print()
+            server_conn.send(newPopulation)
             evoState.value = 1
 
 
@@ -68,6 +71,6 @@ def setup(numClients):
     evoThread.join()
 
 
-numClients = 2
+numClients = 1
 
 setup(numClients)

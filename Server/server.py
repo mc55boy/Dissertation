@@ -19,6 +19,7 @@ currentPopulation = list()
 useSamePop = True
 numClients = None
 registeredClients = 0
+numProcessed = 0
 
 
 def newClient():
@@ -73,7 +74,6 @@ def registerClient(self):
             if item == client:
                 client['Registered'] = True
                 connectedClients[i] = client
-
                 global registeredClients
                 registeredClients += 1
                 if registeredClients == numClients:
@@ -87,18 +87,15 @@ def registerClient(self):
 
 
 def assignModels():
-    print("Assigning Models")
     pop = evo_conn.recv()
     global currentPopulation
     currentPopulation = list()
     for ind in pop:
         newInd = {"Model": ind["Model"], "ModelID": ind["ModelID"], "Processed": False, "clientID": None, "Result": 0}
         currentPopulation.append(newInd)
-        print(currentPopulation)
     for client in range(len(connectedClients)):
         connectedClients[client]["Model"] = currentPopulation[client]["Model"]
         currentPopulation[client]["clientID"] = connectedClients[client]["clientID"]
-        print(connectedClients[client]["Model"])
 
 
 def ready():
@@ -117,6 +114,7 @@ def ready():
 
 def processResult(self):
     global currentPopulation
+    global numProcessed
     content_length = int(self.headers['Content-Length'])
     post_data = self.rfile.read(content_length)
     try:
@@ -129,8 +127,12 @@ def processResult(self):
                 ind['Result'] = result
                 ind['Processed'] = True
                 currentPopulation[i] = ind
-                serverState.value = 2
-                evo_conn.send(currentPopulation)
+                numProcessed += 1
+                if numProcessed == len(currentPopulation):
+                    serverState.value = 2
+                    evo_conn.send(currentPopulation)
+                    print("Processed: " + str(currentPopulation))
+                    numProcessed = 0
                 return {'status': 200, 'response': "Result Recorded"}
     except StopIteration:
         return {'status': 500, 'response': "Couldn't post result"}

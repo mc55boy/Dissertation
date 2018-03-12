@@ -59,8 +59,9 @@ def run():
                     downloadData(datasetName)
                 netModel = HTTPServices.HTTPHandler.requestModel(myID)
                 netModel = list(map(int, netModel))
-                accuracy = netHandler.neuralNet.multilayerTrain(datasetLocation, netModel)
-                #accuracy = 0.8874
+                #accuracy = netHandler.neuralNet.multilayerTrain(datasetLocation, netModel)
+                time.sleep(3)
+                accuracy = 0.8874
                 netInput = {"clientID": myID, "results": {"accuracy": str(accuracy)}}
                 if HTTPServices.HTTPHandler.sendResults(netInput):
                     print("Getting next model...")

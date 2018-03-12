@@ -3,6 +3,7 @@ from deap import base
 from deap import creator
 from deap import tools
 import uuid
+import time
 
 toolbox = base.Toolbox()
 population = list()
@@ -43,33 +44,36 @@ def getNextGeneration(originalPop, processedPop):
     else:
         print("Amount of processed nets doesn't match original population")
     mutatedPop = mutatePopulation(originalPop)
-    return originalPop, mutatedPop
+    return mutatedPop
 
 
 def mutatePopulation(population):
     mutatedPop = list()
     print()
     for ind in population:
-        print(ind['Model'])
         tempInd = mutate(ind['Model'], 20)
         ind['Model'] = tempInd
-        print(tempInd)
         mutatedPop.append(ind)
     print()
     return mutatedPop
 
 
 def mutate(ind, maxChange):
-    ind = toolbox.clone(ind)
-    lowList = []
-    highList = []
-    for x in ind:
-        if x > maxChange:
-            lowList.append(x - maxChange)
-        else:
-            lowList.append(1)
-        highList.append(x + maxChange)
 
-    ind2, = tools.mutUniformInt(ind, lowList, highList, 0.5)
+    ind = toolbox.clone(ind)
+    tmp = toolbox.clone(ind)
+    geneSame = True
+    while geneSame:
+        lowList = []
+        highList = []
+        for x in ind:
+            if x > maxChange:
+                lowList.append(x - maxChange)
+            else:
+                lowList.append(1)
+            highList.append(x + maxChange)
+        ind2, = tools.mutUniformInt(ind, lowList, highList, 0.5)
+        if ind2 != tmp:
+            geneSame = False
     del ind2.fitness.values
     return ind2
