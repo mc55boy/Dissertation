@@ -3,6 +3,7 @@ from multiprocessing import Value, Pipe
 import server as server
 import evoHandler as evo
 import time
+import heapq
 
 
 def runServer(threadname, evoState, serverState, evo_conn, numClients):
@@ -34,10 +35,11 @@ def coreWait(counter, message):
     return counter
 
 
-def runEvo(threadname, evoState, serverState, server_conn, numClients):
+def runEvo(threadname, evoState, serverState, server_conn, numClients, maxPop):
     numInput = 784
     originalPop = setupEvo(evoState, numInput, numClients, server_conn)
     counter = 0
+    pop = list()
     while True:
         if serverState.value == 0:
             counter = coreWait(counter, "Waiting for clients")
@@ -46,24 +48,36 @@ def runEvo(threadname, evoState, serverState, server_conn, numClients):
             counter = coreWait(counter, "Waiting for clients to process nets")
         elif serverState.value == 2:
             processedPop = server_conn.recv()
+
+            for ind in processedPop:
+                if len(pop) > 0:
+                    if ind['Result'] > heapq.nsmallest(1, pop)[0][0]:
+                        if len(pop) > maxPop:
+                            heapq.heappop(pop)
+                        heapq.heappush(pop, (ind['Result'], ind['Model']))
+                else:
+                    heapq.heappush(pop, (ind['Result'], ind['Model']))
+                # print(heapq.nlargest(1, pop))
+
+            for ind in pop:
+                print(ind)
             newPopulation = evo.getNextGeneration(originalPop, processedPop)
             print()
-            print("!!!!!!!!!!!!!!!!NEW POP!!!!!!!!!!!!!!!!!")
-            print(originalPop)
-            print(newPopulation)
+            # print(newPopulation)
             print()
+
             server_conn.send(newPopulation)
             evoState.value = 1
 
 
 def setup(numClients):
-
+    maxPop = 4
     server_conn, evo_conn = Pipe()
     evoState = Value('i', 0)
     serverState = Value('i', 0)
 
     serverThread = Thread(name="Server", target=runServer, args=("ServerThread", evoState, serverState, evo_conn, numClients))
-    evoThread = Thread(name="Evo", target=runEvo, args=("EvoThread", evoState, serverState,  server_conn, numClients))
+    evoThread = Thread(name="Evo", target=runEvo, args=("EvoThread", evoState, serverState,  server_conn, numClients, maxPop))
 
     evoThread.start()
     serverThread.start()

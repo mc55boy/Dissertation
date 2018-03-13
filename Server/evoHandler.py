@@ -3,7 +3,6 @@ from deap import base
 from deap import creator
 from deap import tools
 import uuid
-import time
 
 toolbox = base.Toolbox()
 population = list()
@@ -72,7 +71,14 @@ def mutate(ind, maxChange):
             else:
                 lowList.append(1)
             highList.append(x + maxChange)
+
         ind2, = tools.mutUniformInt(ind, lowList, highList, 0.5)
+        if random.randint(0, 100) < 10 and len(ind2) < 6:
+            print("Added")
+            ind2.append(random.randint(1, 744))
+        if random.randint(0, 100) < 10 and len(ind2) > 1:
+            print("Removed")
+            del ind2[random.randint(0, len(ind2)-1)]
         if ind2 != tmp:
             geneSame = False
     del ind2.fitness.values
