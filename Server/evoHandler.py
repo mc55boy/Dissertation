@@ -3,6 +3,9 @@ from deap import base
 from deap import creator
 from deap import tools
 import uuid
+import time
+
+globICLS = None
 
 toolbox = base.Toolbox()
 population = list()
@@ -10,11 +13,21 @@ population = list()
 
 # At the moment all it does is generate a random number of layers filled with neurons
 def generateInd(icls, maxLayers, maxNeurons):
+    global globICLS
+    globICLS = icls
     genome = list()
     numLayers = random.randint(1, maxLayers)
     for _ in range(numLayers):
         genome.append(random.randint(1, maxNeurons))
     return icls(genome)
+
+
+def transformIntoChrom(pop):
+    global globICLS
+    returnList = list()
+    for ind in pop:
+        returnList.append(globICLS(ind))
+    return returnList
 
 
 def createPop(maxNeurons, maxLayers, numClients):
@@ -30,7 +43,17 @@ def createPop(maxNeurons, maxLayers, numClients):
     return population
 
 
-def getNextGeneration(originalPop, processedPop):
+def nextGen(pop, maxLayers):
+    print("!!!!!!!!!!!!!!!!")
+    for ind in pop:
+        print(ind)
+        # ind[1]['Model'].fitness.value = ind[0]
+        # print(ind[1]['Model'].fitness.value)
+    print("!!!!!!!!!!!!!!!!")
+    time.sleep(3)
+
+
+def getNextGeneration(originalPop, processedPop, maxLayers):
     lenOrg = len(originalPop)
     lenPrc = len(processedPop)
     if lenOrg == lenPrc:
@@ -42,22 +65,20 @@ def getNextGeneration(originalPop, processedPop):
                     break
     else:
         print("Amount of processed nets doesn't match original population")
-    mutatedPop = mutatePopulation(originalPop)
+    mutatedPop = mutatePopulation(originalPop, maxLayers)
     return mutatedPop
 
 
-def mutatePopulation(population):
+def mutatePopulation(population, maxLayers):
     mutatedPop = list()
-    print()
     for ind in population:
-        tempInd = mutate(ind['Model'], 20)
+        tempInd = mutate(ind['Model'], 20, maxLayers)
         ind['Model'] = tempInd
         mutatedPop.append(ind)
-    print()
     return mutatedPop
 
 
-def mutate(ind, maxChange):
+def mutate(ind, maxChange, maxLayers):
 
     ind = toolbox.clone(ind)
     tmp = toolbox.clone(ind)
@@ -73,11 +94,9 @@ def mutate(ind, maxChange):
             highList.append(x + maxChange)
 
         ind2, = tools.mutUniformInt(ind, lowList, highList, 0.5)
-        if random.randint(0, 100) < 10 and len(ind2) < 6:
-            print("Added")
+        if random.randint(0, 100) < 10 and len(ind2) < (maxLayers + 1):
             ind2.append(random.randint(1, 744))
         if random.randint(0, 100) < 10 and len(ind2) > 1:
-            print("Removed")
             del ind2[random.randint(0, len(ind2)-1)]
         if ind2 != tmp:
             geneSame = False

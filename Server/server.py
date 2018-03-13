@@ -88,8 +88,11 @@ def registerClient(self):
 
 def assignModels():
     pop = evo_conn.recv()
+    for ind in pop:
+        print(ind)
     global currentPopulation
     currentPopulation = list()
+
     for ind in pop:
         newInd = {"Model": ind["Model"], "ModelID": ind["ModelID"], "Processed": False, "clientID": None, "Result": 0}
         currentPopulation.append(newInd)

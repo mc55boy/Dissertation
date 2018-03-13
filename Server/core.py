@@ -12,13 +12,10 @@ def runServer(threadname, evoState, serverState, evo_conn, numClients):
     print("Server Thread end")
 
 
-def setupEvo(evoState, datasetInput, numClients, server_conn):
+def setupEvo(evoState, datasetInput, numClients, server_conn, maxLayers):
     evoState.value = 0
-    maxLayers = 1
     # createPop(maxNeurons, maxLayers, numClients):
     population = evo.createPop(datasetInput, maxLayers, numClients)
-    for ind in population:
-        print(ind)
     server_conn.send(population)
     evoState.value = 1
     return population
@@ -35,9 +32,9 @@ def coreWait(counter, message):
     return counter
 
 
-def runEvo(threadname, evoState, serverState, server_conn, numClients, maxPop):
+def runEvo(threadname, evoState, serverState, server_conn, numClients, maxPop, maxLayers):
     numInput = 784
-    originalPop = setupEvo(evoState, numInput, numClients, server_conn)
+    originalPop = setupEvo(evoState, numInput, numClients, server_conn, maxLayers)
     counter = 0
     pop = list()
     while True:
@@ -47,23 +44,16 @@ def runEvo(threadname, evoState, serverState, server_conn, numClients, maxPop):
             evoState.value = 0
             counter = coreWait(counter, "Waiting for clients to process nets")
         elif serverState.value == 2:
-            processedPop = server_conn.recv()
-
+            processedPop = evo.transformIntoChrom(server_conn.recv())
             for ind in processedPop:
-                if len(pop) > 0:
-                    if ind['Result'] > heapq.nsmallest(1, pop)[0][0]:
-                        if len(pop) > maxPop:
-                            heapq.heappop(pop)
-                        heapq.heappush(pop, (ind['Result'], ind['Model']))
-                else:
-                    heapq.heappush(pop, (ind['Result'], ind['Model']))
-                # print(heapq.nlargest(1, pop))
-
-            for ind in pop:
+                print()
                 print(ind)
-            newPopulation = evo.getNextGeneration(originalPop, processedPop)
-            print()
-            # print(newPopulation)
+                print()
+                heapq.heappush(pop, (ind['Result'], ind))
+                if len(pop) > maxPop:
+                    heapq.heappop(pop)
+            evo.nextGen(pop, maxLayers)
+            newPopulation = evo.getNextGeneration(originalPop, processedPop, maxLayers)
             print()
 
             server_conn.send(newPopulation)
@@ -71,13 +61,14 @@ def runEvo(threadname, evoState, serverState, server_conn, numClients, maxPop):
 
 
 def setup(numClients):
-    maxPop = 4
+    maxLayers = 4
+    maxPop = 5
     server_conn, evo_conn = Pipe()
     evoState = Value('i', 0)
     serverState = Value('i', 0)
 
     serverThread = Thread(name="Server", target=runServer, args=("ServerThread", evoState, serverState, evo_conn, numClients))
-    evoThread = Thread(name="Evo", target=runEvo, args=("EvoThread", evoState, serverState,  server_conn, numClients, maxPop))
+    evoThread = Thread(name="Evo", target=runEvo, args=("EvoThread", evoState, serverState,  server_conn, numClients, maxPop, maxLayers))
 
     evoThread.start()
     serverThread.start()
