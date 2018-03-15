@@ -13,7 +13,6 @@ def sendGet(url):
 
 
 def sendPost(url, dataToSend, header):
-
     success = False
 
     request = urllib.request.Request("http://localhost:9000" + url, data=dataToSend, headers=header)

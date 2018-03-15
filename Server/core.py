@@ -34,7 +34,7 @@ def coreWait(counter, message):
 
 def runEvo(threadname, evoState, serverState, server_conn, numClients, maxPop, maxLayers):
     numInput = 784
-    originalPop = setupEvo(evoState, numInput, numClients, server_conn, maxLayers)
+    setupEvo(evoState, numInput, numClients, server_conn, maxLayers)
     counter = 0
     pop = list()
     while True:
@@ -46,23 +46,21 @@ def runEvo(threadname, evoState, serverState, server_conn, numClients, maxPop, m
         elif serverState.value == 2:
             processedPop = evo.transformIntoChrom(server_conn.recv())
             for ind in processedPop:
-                print()
                 print(ind)
                 print()
                 heapq.heappush(pop, (ind['Result'], ind))
                 if len(pop) > maxPop:
                     heapq.heappop(pop)
-            evo.nextGen(pop, maxLayers)
-            newPopulation = evo.getNextGeneration(originalPop, processedPop, maxLayers)
-            print()
-
-            server_conn.send(newPopulation)
+            for ind in pop:
+                print(str(ind[0]) + " " + str(ind[1]['Model']))
+            mutatedPop = evo.nextGen(pop, maxLayers)
             evoState.value = 1
+            server_conn.send(mutatedPop)
 
 
 def setup(numClients):
     maxLayers = 4
-    maxPop = 5
+    maxPop = 10
     server_conn, evo_conn = Pipe()
     evoState = Value('i', 0)
     serverState = Value('i', 0)

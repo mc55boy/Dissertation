@@ -26,7 +26,9 @@ def transformIntoChrom(pop):
     global globICLS
     returnList = list()
     for ind in pop:
-        returnList.append(globICLS(ind))
+        ind['Model'] = globICLS(ind['Model'])
+        ind['Model'].fitness.value = ind['Result']
+        returnList.append(ind)
     return returnList
 
 
@@ -39,18 +41,19 @@ def createPop(maxNeurons, maxLayers, numClients):
     pop = toolbox.population(numClients)
     print("Population Created...")
     for ind in pop:
-        population.append({"Model": ind, "ModelID": uuid.uuid4().hex})
+        newInd = (0.0, {"Model": ind, "ModelID": uuid.uuid4().hex})
+        population.append(newInd)
     return population
 
 
 def nextGen(pop, maxLayers):
-    print("!!!!!!!!!!!!!!!!")
+    mutatedPop = list()
     for ind in pop:
-        print(ind)
-        # ind[1]['Model'].fitness.value = ind[0]
-        # print(ind[1]['Model'].fitness.value)
-    print("!!!!!!!!!!!!!!!!")
-    time.sleep(3)
+        mutatedModel = mutate(ind[1]['Model'], 20, maxLayers)
+        ind[1]['Model'] = mutatedModel
+        ind[1]['ModelID'] = uuid.uuid4().hex
+        mutatedPop.append(ind)
+    return mutatedPop
 
 
 def getNextGeneration(originalPop, processedPop, maxLayers):

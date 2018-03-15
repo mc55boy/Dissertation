@@ -88,13 +88,10 @@ def registerClient(self):
 
 def assignModels():
     pop = evo_conn.recv()
-    for ind in pop:
-        print(ind)
     global currentPopulation
     currentPopulation = list()
-
     for ind in pop:
-        newInd = {"Model": ind["Model"], "ModelID": ind["ModelID"], "Processed": False, "clientID": None, "Result": 0}
+        newInd = {"Model": ind[1]["Model"], "ModelID": ind[1]["ModelID"], "Processed": False, "clientID": None, "Result": 0}
         currentPopulation.append(newInd)
     for client in range(len(connectedClients)):
         connectedClients[client]["Model"] = currentPopulation[client]["Model"]
@@ -103,21 +100,21 @@ def assignModels():
 
 def ready():
     global evoState
-    global currentPopulation
     global useSamePop
     if evoState.value == 1:
-        if useSamePop or serverState.value == 2:
+        serverState.value = 1
+        if useSamePop:
             assignModels()
             useSamePop = False
         return {'status': 200, 'response': 'True'}
     else:
-        useSamePop = True
         return {'status': 200, 'response': 'False'}
 
 
 def processResult(self):
     global currentPopulation
     global numProcessed
+    global useSamePop
     content_length = int(self.headers['Content-Length'])
     post_data = self.rfile.read(content_length)
     try:
@@ -132,9 +129,9 @@ def processResult(self):
                 currentPopulation[i] = ind
                 numProcessed += 1
                 if numProcessed == len(currentPopulation):
+                    useSamePop = True
                     serverState.value = 2
                     evo_conn.send(currentPopulation)
-                    print("Processed: " + str(currentPopulation))
                     numProcessed = 0
                 return {'status': 200, 'response': "Result Recorded"}
     except StopIteration:
