@@ -34,6 +34,10 @@ def setup():
         return False
 
 
+def testFunc():
+    print("test")
+
+
 def clientWait(counter, message):
     b = message + "." * counter
     print(b, end="\r")
