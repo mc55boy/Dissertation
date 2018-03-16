@@ -40,7 +40,6 @@ def clientWait(counter, message):
     counter += 1
     if counter == 5:
         counter = 0
-    time.sleep(0.5)
     print(" " * 50, end="\r")
     return counter
 
@@ -59,9 +58,12 @@ def run():
                 if not os.path.exists(datasetLocation):
                     downloadData(datasetName)
                 netModel = HTTPServices.HTTPHandler.requestModel(myID)
+                print()
+                print(netModel)
+                print()
                 netModel = list(map(int, netModel))
                 # accuracy = netHandler.neuralNet.multilayerTrain(datasetLocation, netModel)
-                time.sleep(0.5)
+                time.sleep(2)
                 accuracy = random.uniform(0.0, 1.0)
                 netInput = {"clientID": myID, "results": {"accuracy": str(accuracy)}}
                 if HTTPServices.HTTPHandler.sendResults(netInput):

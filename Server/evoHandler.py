@@ -3,7 +3,7 @@ from deap import base
 from deap import creator
 from deap import tools
 import uuid
-import time
+from copy import deepcopy
 
 globICLS = None
 
@@ -27,18 +27,19 @@ def transformIntoChrom(pop):
     returnList = list()
     for ind in pop:
         ind['Model'] = globICLS(ind['Model'])
-        ind['Model'].fitness.value = ind['Result']
+        result = float(ind['Result'])
+        ind['Model'].fitness.value = result
         returnList.append(ind)
     return returnList
 
 
-def createPop(maxNeurons, maxLayers, numClients):
+def createPop(maxNeurons, maxLayers, numClients, maxPop):
     global population
     creator.create("FitnessMax", base.Fitness, weights=(1.0, ))
     creator.create("Individual", list, fitness=creator.FitnessMax)
     toolbox.register("individual", generateInd, creator.Individual, maxLayers, maxNeurons)
     toolbox.register("population", tools.initRepeat, list, toolbox.individual)
-    pop = toolbox.population(numClients)
+    pop = toolbox.population(maxPop)
     print("Population Created...")
     for ind in pop:
         newInd = (0.0, {"Model": ind, "ModelID": uuid.uuid4().hex})
@@ -49,10 +50,14 @@ def createPop(maxNeurons, maxLayers, numClients):
 def nextGen(pop, maxLayers):
     mutatedPop = list()
     for ind in pop:
+        #tempInd = deepcopy(ind)
         mutatedModel = mutate(ind[1]['Model'], 20, maxLayers)
-        ind[1]['Model'] = mutatedModel
-        ind[1]['ModelID'] = uuid.uuid4().hex
-        mutatedPop.append(ind)
+        modelID = uuid.uuid4().hex
+        result = 0.0
+        clientID = None
+        processed = False
+        tempInd = (result, {'Model': mutatedModel, 'ModelID': modelID, 'clientID': clientID, 'Processed': processed, 'Result': result})
+        mutatedPop.append(tempInd)
     return mutatedPop
 
 
