@@ -1,6 +1,7 @@
 import urllib.parse
 import urllib.request
 import json
+import ast
 
 
 def sendGet(url):
@@ -43,8 +44,7 @@ def getModel(myID):
     header = {"Content-type": "application/x-www-form-urlencoded", "Accept": "text/plain"}
     success, response = sendPost(url, dataToSend, header)
     if success:
-        print(response)
-        return response.split()
+        return json.loads(response)
     else:
         print(response)
         return response

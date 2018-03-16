@@ -45,17 +45,13 @@ def runEvo(threadname, evoState, serverState, server_conn, numClients, maxPop, m
         elif serverState.value == 2:
             processedPop = evo.transformIntoChrom(server_conn.recv())
             for ind in processedPop:
-                # print(ind)
                 heapq.heappush(pop, (ind['Result'], ind))
                 if len(pop) > maxPop:
                     heapq.heappop(pop)
-            '''
             print()
-            print("Pop:")
             for ind in pop:
-                print(ind)
+                print(str(ind[0]) + " " + str(ind[1]['Model']))
             print()
-            '''
             mutatedPop = evo.nextGen(pop, maxLayers)
             evoState.value = 1
             server_conn.send(mutatedPop)
@@ -63,7 +59,7 @@ def runEvo(threadname, evoState, serverState, server_conn, numClients, maxPop, m
 
 def setup(numClients):
     maxLayers = 2
-    maxPop = 4
+    maxPop = 5
 
     server_conn, evo_conn = Pipe()
     evoState = Value('i', 0)

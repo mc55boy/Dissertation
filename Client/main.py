@@ -58,15 +58,14 @@ def run():
                 if not os.path.exists(datasetLocation):
                     downloadData(datasetName)
                 netModel = HTTPServices.HTTPHandler.requestModel(myID)
-                print()
-                print(netModel)
-                print()
-                netModel = list(map(int, netModel))
-                # accuracy = netHandler.neuralNet.multilayerTrain(datasetLocation, netModel)
-                time.sleep(2)
-                accuracy = random.uniform(0.0, 1.0)
-                netInput = {"clientID": myID, "results": {"accuracy": str(accuracy)}}
-                if HTTPServices.HTTPHandler.sendResults(netInput):
+                modelArch = netModel['Model']
+                modelID = netModel['ModelID']
+                print(modelArch)
+                accuracy = netHandler.neuralNet.multilayerTrain(datasetLocation, modelArch)
+                # time.sleep(0.5)
+                # accuracy = random.uniform(0.0, 1.0)
+                response = {"clientID": myID, 'ModelID': modelID, "results": {"accuracy": str(accuracy)}}
+                if HTTPServices.HTTPHandler.sendResults(response):
                     print("Getting next model...")
                 else:
                     print("Something went wrong...")

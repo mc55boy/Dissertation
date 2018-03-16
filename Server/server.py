@@ -21,8 +21,6 @@ numClients = None
 registeredClients = 0
 numProcessed = 0
 
-latestSent = list()
-
 
 def newClient():
     newID = uuid.uuid4().hex
@@ -67,7 +65,7 @@ def registerClient(self):
                     global serverState
                     serverState.value = 1
 
-                return {'status': 200, 'response': "Client Registered"}
+                return {'status': 200, 'response': json.dumps("Client Registered")}
         return {'status': 500, 'response': "Could not find client ID"}
     except StopIteration:
         return {'status': 500, 'response': "Client not found"}
@@ -83,14 +81,13 @@ def getModel(self):
         client = next(item for item in connectedClients if item["clientID"] == clientID)
         for i, item in enumerate(connectedClients):
             if item == client:
-                tempModel = connectedClients[i]['Model'].pop()
-                if not latestSent:
-                    for x in latestSent:
-                        if x['clientID'] == item['clientID']:
-                            x['ModelID'] = tempModel['ModelID']
-                else:
-                    latestSent.appen({['clientID']})
-                return {'status': 200, 'response': transformModel(tempModel['Model'])}
+                for model in connectedClients[i]['Model']:
+                    if not model['Processed']:
+                        returnText = {'Model': model, 'ModelID': model['ModelID']}
+                # tempModel = connectedClients[i]['Model'].pop()
+
+                # return {'status': 200, 'response': transformModel(tempModel['Model'])}
+                return {'status': 200, 'response': returnText}
     except StopIteration:
         return {'status': 500, 'response': "Client not found"}
 
@@ -136,37 +133,25 @@ def processResult(self):
     try:
         jsonData = json.loads(post_data.decode('utf-8'))
         clientID = jsonData['clientID']
-        print()
-        print(json.dumps(jsonData, sort_keys=True, indent=4, separators=(',', ': ')))
-        print()
+        modelID = jsonData['ModelID']
         result = float(jsonData['results']['accuracy'])
-        modelProcessedByClient = next(item for item in currentPopulation if item["clientID"] == clientID)
-        latestModelID = None
-        for model in latestSent:
-            if model['clientID'] == clientID:
-                latestModelID = model['ModelID']
-        print()
-        print(latestModelID)
-        print()
-        for i, ind in enumerate(currentPopulation):
-            if ind == modelProcessedByClient and currentPopulation[i]['ModelID'] == latestModelID:
-                modelProcessedByClient['Result'] = float(result)
-                modelProcessedByClient['Processed'] = True
-                currentPopulation[i] = modelProcessedByClient
-                numProcessed += 1
-                if numProcessed == len(currentPopulation):
-                    useSamePop = True
-                    serverState.value = 2
-                    evo_conn.send(currentPopulation)
-                    numProcessed = 0
 
-                else:
-                    serverState.value = 1
-                break
-        print()
-        for ind in currentPopulation:
-            print(ind)
-        print()
+        for clientNum, client in enumerate(connectedClients):
+            if client["clientID"] == clientID:
+                for modelNum, model in enumerate(connectedClients[clientNum]['Model']):
+                    if model['ModelID'] == modelID:
+                        connectedClients[clientNum]['Model'][modelNum]['Result'] = float(result)
+                        connectedClients[clientNum]['Model'][modelNum]['Processed'] = True
+                        numProcessed += 1
+                        if numProcessed == len(currentPopulation):
+                            useSamePop = True
+                            serverState.value = 2
+                            evo_conn.send(currentPopulation)
+                            numProcessed = 0
+
+                        else:
+                            serverState.value = 1
+                        break
         return {'status': 200, 'response': "Result Recorded"}
     except StopIteration:
         return {'status': 500, 'response': "Couldn't post result"}
@@ -192,9 +177,13 @@ class MyHandler(BaseHTTPRequestHandler):
 
     def _set_response(self, opts): # This is just a duplicate of handle_http. rewrite this to handle both
         self.send_response(opts['status'])
-        self.send_header('Content-type', 'text/html')
+        # self.send_header('Content-type', 'text/html')
+        self.send_header('Content-Type', 'application/json')
         self.end_headers()
-        content = opts['response'].format(self.path)
+        if isinstance(opts['response'], dict):
+            content = json.dumps(opts['response'])
+        else:
+            content = opts['response'].format(self.path)
         self.wfile.write(bytes(content, 'utf-8'))
 
     def do_POST(self):

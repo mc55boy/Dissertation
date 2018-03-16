@@ -1,14 +1,16 @@
 from __future__ import print_function
 import tensorflow as tf
 import time
-import sys
-import array
+
+totalDataSet = list()
+lastDataSet = None
 
 
 def loadMNIST(datasetLocation):
 
     MNIST_Files = ["train-images.idx3-ubyte", "train-labels.idx1-ubyte", "t10k-images.idx3-ubyte", "t10k-labels.idx1-ubyte"]
     MNIST_Headers = [4, 2, 4, 2]
+    global totalDataSet
     totalDataSet = []
     for datasetNum in range(len(MNIST_Files)):
         dataLocation = datasetLocation + MNIST_Files[datasetNum]
@@ -30,16 +32,6 @@ def loadMNIST(datasetLocation):
             totalDataSet.append(currData)
         print("Done")
 
-    '''
-    labelSets = [1, 3]
-    for setNum in labelSets:
-        flat_list = []
-        for sublist in totalDataSet[setNum]:
-            for item in sublist:
-                flat_list.append(item)
-        totalDataSet[setNum] = flat_list
-    '''
-
     labelSets = [1, 3]
     for setNum in labelSets:
         tempList = []
@@ -59,7 +51,7 @@ def buildNet(inputNet, inputLayer):
 
     existingLayer = inputLayer
 
-    for newLayer_Size in inputNet["structure"]["hiddenLayers"]:
+    for newLayer_Size in inputNet['structure']['hiddenLayers']['Model']:
         # Create new hidden layer
         # newLayer = tf.placeholder("float", [None, newLayer_Size])
         newLayer = tf.placeholder("float", [None, newLayer_Size])
@@ -80,13 +72,20 @@ def buildNet(inputNet, inputLayer):
     return outputLayer
 
 
-
 class neuralNet:
 
     def multilayerTrain(datasetLocation, layerInput):
 
         netInput = {"structure": {"outputLayer": 10, "inputLayer": 784, "hiddenLayers": layerInput}}
-        train_x, train_y, test_x, test_y = loadMNIST(datasetLocation)
+        global lastDataSet
+        if lastDataSet is None or not lastDataSet == datasetLocation:
+            train_x, train_y, test_x, test_y = loadMNIST(datasetLocation)
+        else:
+            global totalDataSet
+            train_x = totalDataSet[0]
+            train_y = totalDataSet[1]
+            test_x = totalDataSet[2]
+            test_y = totalDataSet[3]
 
         # learning_rate = netInput["parameters"]["learningRate"]
         learning_rate = 0.005
@@ -95,6 +94,7 @@ class neuralNet:
         # batch_size = netInput["parameters"]["batch_size"]
         batch_size = 100
         display_step = 1
+        print(netInput)
         inputSize = netInput["structure"]["inputLayer"]
         outputClassNum = netInput["structure"]["outputLayer"]
 
