@@ -66,10 +66,7 @@ class HTTPHandler:
         print(response)
         return success
 
-
-
     def connectToServer():
-        #Get new ID
         success, response = sendGet("getNewID")
         if success:
             tempID = response
@@ -85,11 +82,9 @@ class HTTPHandler:
             print("Failed to obtain new ID")
             return False, None
 
-
     def requestModel(myID):
         nextModel = getModel(myID)
         return nextModel
-        #urllib.request.urlretrieve("http://localhost:9000/Models/" + nextModel + ".json", "DownloadedModel/model.json")
 
     def requestData(datasetName):
         urllib.request.urlretrieve("http://localhost:9000/Data/" + datasetName + ".tar.gz", "Data/MNIST_data.tar.gz")

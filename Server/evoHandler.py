@@ -50,7 +50,6 @@ def createPop(maxNeurons, maxLayers, numClients, maxPop):
 def nextGen(pop, maxLayers):
     mutatedPop = list()
     for ind in pop:
-        #tempInd = deepcopy(ind)
         mutatedModel = mutate(ind[1]['Model'], 20, maxLayers)
         modelID = uuid.uuid4().hex
         result = 0.0

@@ -1,6 +1,8 @@
 from __future__ import print_function
 import tensorflow as tf
 import time
+import numpy as np
+from sys import getsizeof
 
 totalDataSet = list()
 lastDataSet = None
@@ -40,8 +42,8 @@ def loadMNIST(datasetLocation):
             flat_list[sublist[0]] = 1.0
             tempList.append(flat_list)
         totalDataSet[setNum] = tempList
-    print(str(len(totalDataSet[0])) + " " + str(len(totalDataSet[1])) + " " + str(len(totalDataSet[2])) + " " + str(len(totalDataSet[3])))
-    return totalDataSet[0], totalDataSet[1], totalDataSet[2], totalDataSet[3]
+    print("Converting to numpy array...")
+    return np.array(totalDataSet[0], dtype=np.uint8), np.array(totalDataSet[1], dtype=np.uint8), np.array(totalDataSet[2], dtype=np.uint8), np.array(totalDataSet[3], dtype=np.uint8)
 
 
 def buildNet(inputNet, inputLayer):
@@ -79,29 +81,30 @@ class neuralNet:
         netInput = {"structure": {"outputLayer": 10, "inputLayer": 784, "hiddenLayers": layerInput}}
         global lastDataSet
         if lastDataSet is None or not lastDataSet == datasetLocation:
+            lastDataSet = datasetLocation
             train_x, train_y, test_x, test_y = loadMNIST(datasetLocation)
         else:
             global totalDataSet
-            train_x = totalDataSet[0]
-            train_y = totalDataSet[1]
-            test_x = totalDataSet[2]
-            test_y = totalDataSet[3]
+            train_x = np.array(totalDataSet[0], dtype=np.uint8)
+            train_y = np.array(totalDataSet[1], dtype=np.uint8)
+            test_x = np.array(totalDataSet[2], dtype=np.uint8)
+            test_y = np.array(totalDataSet[3], dtype=np.uint8)
+
+
 
         # learning_rate = netInput["parameters"]["learningRate"]
         learning_rate = 0.005
         # training_epochs = netInput["parameters"]["training_epochs"]
-        training_epochs = 1
+        training_epochs = 10
         # batch_size = netInput["parameters"]["batch_size"]
         batch_size = 100
         display_step = 1
-        print(netInput)
         inputSize = netInput["structure"]["inputLayer"]
         outputClassNum = netInput["structure"]["outputLayer"]
 
         inputLayer = tf.placeholder("float", [None, inputSize])
         outputLayer = tf.placeholder("float", [None, outputClassNum])
         logits = buildNet(netInput, inputLayer)
-        print(logits)
         #logits = multilayer_perceptron(X)
         # Define loss and optimizer
 
@@ -112,13 +115,15 @@ class neuralNet:
         init = tf.global_variables_initializer()
 
         total_batch = int(len(train_x) / batch_size)
-        batchedData = [[], []]
+
+        batchedData = np.empty(shape=(total_batch, batch_size, 784), dtype=np.uint8)
+        batchedLabel = np.empty(shape=(total_batch, batch_size, 10), dtype=np.uint8)
+
         for i in range(total_batch):
-            batchedData[0].append(train_x[(i*batch_size):((i+1)*batch_size)])
-            batchedData[1].append(train_y[(i*batch_size):((i+1)*batch_size)])
+            np.copyto(batchedData[i], train_x[(i*batch_size):((i+1)*batch_size)])
+            np.copyto(batchedLabel[i], train_y[(i*batch_size):((i+1)*batch_size)])
 
         start = time.time()
-
         with tf.Session() as sess:
             sess.run(init)
 
@@ -126,26 +131,15 @@ class neuralNet:
             for epoch in range(training_epochs):
                 avg_cost = 0.
                 # Loop over all batches
-                # for i in range(total_batch):
                 for batch in range(total_batch):
-                    batch_x = batchedData[0][batch]
-                    batch_y = batchedData[1][batch]
-                    # print(batch)
-                    '''
-                    i = 0
-                    while i < len(train_x):
-                        start = i
-                        end = i + batch_size
-                        batch_x = train_x[start:end]
-                        batch_y = train_y[start:end]
-                    '''
-                    #batch_x, batch_y = mnist.train.next_batch(batch_size)
-                    # Run optimization op (backprop) and cost op (to get loss value)
-                    _, c = sess.run([train_op, loss_op], feed_dict={inputLayer: batch_x,
-                                                                    outputLayer: batch_y})
+
+                    batch_x = batchedData[batch]
+                    batch_y = batchedLabel[batch]
+                    _, c = sess.run([train_op, loss_op], feed_dict={inputLayer: batch_x, outputLayer: batch_y})
                     # Compute average loss
                     avg_cost += c / total_batch
-                    print("Batch " + str(batch) + "/" + str(total_batch) + "  cost: " + str(avg_cost))
+                    if batch % 10 == 0:
+                        print("Batch " + str(batch) + "/" + str(total_batch) + "  cost: " + str(avg_cost))
                     i += batch_size
                 # Display logs per epoch step
                 if epoch % display_step == 0:
