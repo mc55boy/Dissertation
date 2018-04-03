@@ -84,9 +84,7 @@ def getModel(self):
                 for model in connectedClients[i]['Model']:
                     if not model['Processed']:
                         returnText = {'Model': model, 'ModelID': model['ModelID']}
-                # tempModel = connectedClients[i]['Model'].pop()
 
-                # return {'status': 200, 'response': transformModel(tempModel['Model'])}
                 return {'status': 200, 'response': returnText}
     except StopIteration:
         return {'status': 500, 'response': "Client not found"}
@@ -97,7 +95,9 @@ def assignModels():
     global currentPopulation
     currentPopulation = list()
     for ind in pop:
-        newInd = {"Model": ind[1]["Model"], "ModelID": ind[1]["ModelID"], "Processed": False, "clientID": None, "Result": 0}
+        print("HERE!!!!!!!!!!!!!!!!!!!!")
+        print(ind)
+        newInd = {"Model": ind[1]["Model"], "Parameters": ind[1]["Parameters"], "ModelID": ind[1]["ModelID"], "Processed": False, "clientID": None, "Result": 0}
         currentPopulation.append(newInd)
 
     clientCounter = 0

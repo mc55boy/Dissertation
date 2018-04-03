@@ -53,7 +53,7 @@ def buildNet(inputNet, inputLayer):
 
     existingLayer = inputLayer
 
-    for newLayer_Size in inputNet['structure']['hiddenLayers']['Model']:
+    for newLayer_Size in inputNet['structure']['hiddenLayers']:
         # Create new hidden layer
         # newLayer = tf.placeholder("float", [None, newLayer_Size])
         newLayer = tf.placeholder("float", [None, newLayer_Size])
@@ -76,7 +76,8 @@ def buildNet(inputNet, inputLayer):
 
 class neuralNet:
 
-    def multilayerTrain(datasetLocation, layerInput):
+    def multilayerTrain(datasetLocation, layerInput, parameters):
+
 
         netInput = {"structure": {"outputLayer": 10, "inputLayer": 784, "hiddenLayers": layerInput}}
         global lastDataSet
@@ -90,17 +91,22 @@ class neuralNet:
             test_x = np.array(totalDataSet[2], dtype=np.uint8)
             test_y = np.array(totalDataSet[3], dtype=np.uint8)
 
-
-
-        # learning_rate = netInput["parameters"]["learningRate"]
-        learning_rate = 0.005
-        # training_epochs = netInput["parameters"]["training_epochs"]
-        training_epochs = 10
-        # batch_size = netInput["parameters"]["batch_size"]
-        batch_size = 100
+        learning_rate = parameters["learningRate"]
+        # learning_rate = 0.005
+        training_epochs = parameters["trainingEpochs"]
+        # training_epochs = 10
+        batch_size = parameters["batchSize"]
+        # batch_size = 100
         display_step = 1
         inputSize = netInput["structure"]["inputLayer"]
         outputClassNum = netInput["structure"]["outputLayer"]
+
+        print()
+        print("Learning Rate: " + str(learning_rate))
+        print("Epochs:        " + str(training_epochs))
+        print("Batch Size:    " + str(batch_size))
+        print(layerInput)
+        print()
 
         inputLayer = tf.placeholder("float", [None, inputSize])
         outputLayer = tf.placeholder("float", [None, outputClassNum])
@@ -116,8 +122,8 @@ class neuralNet:
 
         total_batch = int(len(train_x) / batch_size)
 
-        batchedData = np.empty(shape=(total_batch, batch_size, 784), dtype=np.uint8)
-        batchedLabel = np.empty(shape=(total_batch, batch_size, 10), dtype=np.uint8)
+        batchedData = np.empty(shape=(total_batch, batch_size, inputSize), dtype=np.uint8)
+        batchedLabel = np.empty(shape=(total_batch, batch_size, outputClassNum), dtype=np.uint8)
 
         for i in range(total_batch):
             np.copyto(batchedData[i], train_x[(i*batch_size):((i+1)*batch_size)])

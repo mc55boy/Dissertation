@@ -3,7 +3,8 @@ from deap import base
 from deap import creator
 from deap import tools
 import uuid
-from copy import deepcopy
+from itertools import repeat
+from collections import Sequence
 
 globICLS = None
 
@@ -12,10 +13,20 @@ population = list()
 
 
 # At the moment all it does is generate a random number of layers filled with neurons
-def generateInd(icls, maxLayers, maxNeurons):
+def generateInd(icls, maxLayers, maxNeurons,):
     global globICLS
     globICLS = icls
     genome = list()
+    # add parameters
+
+    learningRate = 0.005
+    training_epochs = 10
+    batch_size = 100
+
+    genome.append(learningRate)
+    genome.append(training_epochs)
+    genome.append(batch_size)
+    # add layers
     numLayers = random.randint(1, maxLayers)
     for _ in range(numLayers):
         genome.append(random.randint(1, maxNeurons))
@@ -26,7 +37,13 @@ def transformIntoChrom(pop):
     global globICLS
     returnList = list()
     for ind in pop:
-        ind['Model'] = globICLS(ind['Model'])
+        model = list()
+        model.append(ind['Parameters']['learningRate'])
+        model.append(ind['Parameters']['trainingEpochs'])
+        model.append(ind['Parameters']['batchSize'])
+        model.extend(ind['Model'])
+        print(model)
+        ind['Model'] = globICLS(model)
         result = float(ind['Result'])
         ind['Model'].fitness.value = result
         returnList.append(ind)
@@ -42,15 +59,24 @@ def createPop(maxNeurons, maxLayers, numClients, maxPop):
     pop = toolbox.population(maxPop)
     print("Population Created...")
     for ind in pop:
-        newInd = (0.0, {"Model": ind, "ModelID": uuid.uuid4().hex})
+        # Split parameters and layer chromosomes
+        parameters = list()
+        model = list()
+        for i, chrom in enumerate(ind):
+            if i < 3:
+                parameters.append(chrom)
+            else:
+                model.append(chrom)
+        newInd = (0.0, {"Parameters": {"learningRate": parameters[0], "trainingEpochs": parameters[1], "batchSize": parameters[2]}, "Model": model, "ModelID": uuid.uuid4().hex})
         population.append(newInd)
     return population
 
 
-def nextGen(pop, maxLayers):
+def nextGen(pop, maxLayers, mutationRate):
     mutatedPop = list()
+    percentageChange = 20
     for ind in pop:
-        mutatedModel = mutate(ind[1]['Model'], 20, maxLayers)
+        mutatedModel = mutate(ind[1]['Model'], percentageChange, maxLayers, mutationRate)
         modelID = uuid.uuid4().hex
         result = 0.0
         clientID = None
@@ -60,52 +86,68 @@ def nextGen(pop, maxLayers):
     return mutatedPop
 
 
-def getNextGeneration(originalPop, processedPop, maxLayers):
-    lenOrg = len(originalPop)
-    lenPrc = len(processedPop)
-    if lenOrg == lenPrc:
-        for p in range(lenPrc):
-            for o in range(lenOrg):
-                if processedPop[p]['ModelID'] == originalPop[o]['ModelID']:
-                    fitness = processedPop[p]['Result']
-                    originalPop[o]['Model'].fitness.value = fitness
-                    break
-    else:
-        print("Amount of processed nets doesn't match original population")
-    mutatedPop = mutatePopulation(originalPop, maxLayers)
-    return mutatedPop
+# Slightly edited method taken from the DEAP library to handle custom gene
+def custMut(individual, low, up, indpb):
+
+    size = len(individual)
+    if not isinstance(low, Sequence):
+        low = repeat(low, size)
+    elif len(low) < size:
+        raise IndexError("low must be at least the size of individual: %d < %d" % (len(low), size))
+    if not isinstance(up, Sequence):
+        up = repeat(up, size)
+    elif len(up) < size:
+        raise IndexError("up must be at least the size of individual: %d < %d" % (len(up), size))
+
+    for i, xl, xu in zip(range(size), low, up):
+        if random.random() < indpb:
+            # Edited part of the mutation to handle single float gene (learning rate)
+            if i == 0:
+                individual[i] = random.uniform(xl, xu)
+            else:
+                individual[i] = random.randint(xl, xu)
+
+    return individual,
 
 
-def mutatePopulation(population, maxLayers):
-    mutatedPop = list()
-    for ind in population:
-        tempInd = mutate(ind['Model'], 20, maxLayers)
-        ind['Model'] = tempInd
-        mutatedPop.append(ind)
-    return mutatedPop
-
-
-def mutate(ind, maxChange, maxLayers):
-
+def mutate(ind, percChange, maxLayers, mutationRate):
     ind = toolbox.clone(ind)
     tmp = toolbox.clone(ind)
     geneSame = True
     while geneSame:
+        # two lists that hold the max and min amount the ind chromosomes can change to
         lowList = []
         highList = []
-        for x in ind:
-            if x > maxChange:
-                lowList.append(x - maxChange)
-            else:
-                lowList.append(1)
-            highList.append(x + maxChange)
+        for i, chrom in enumerate(ind):
+            maxChange = chrom * (percChange / 100)
+            if not i == 0:
+                maxChange = int(maxChange)
+            # Ensure that learning rate is handled seperately
 
-        ind2, = tools.mutUniformInt(ind, lowList, highList, 0.5)
-        if random.randint(0, 100) < 10 and len(ind2) < (maxLayers + 1):
-            ind2.append(random.randint(1, 744))
-        if random.randint(0, 100) < 10 and len(ind2) > 1:
-            del ind2[random.randint(0, len(ind2)-1)]
+            lowList.append(chrom - maxChange)
+            highList.append(chrom + maxChange)
+
+        ind2, = custMut(ind, lowList, highList, mutationRate)
+        # Make sure that only the layers are affected by this part as this adds/deletes layers
+        if i > 2:
+
+            if random.randint(0, 100) < 10 and len(ind2) < (maxLayers + 1):
+                # Calculate the average number of neurons in each layer
+                totalNeurons = 0
+                for i in range(3, len(ind2)-1):
+                    totalNeurons += ind2[i]
+                avNeurons = totalNeurons / ((len(ind2)-1) - 3)
+
+                # Create random size of new layer using normal distr
+                newLayerSize = int(random.gauss(avNeurons, 1))
+                # Create random insert point
+                location = random.randint(3, len(ind2)-1)
+                ind2.insert(location, newLayerSize)
+
+            if random.randint(0, 100) < 10 and len(ind2) > 1:
+                del ind2[random.randint(0, len(ind2)-1)]
+
+        # Check if the gene has been changed (ensure forced mutation)
         if ind2 != tmp:
             geneSame = False
     del ind2.fitness.values
-    return ind2

@@ -1,7 +1,8 @@
 import httpClient as HTTPServices
 import os
 import tarfile
-import netHandler as netHandler
+# import netHandler as netHandler
+import random
 
 myID = None
 
@@ -56,10 +57,11 @@ def run():
                 if not os.path.exists(datasetLocation):
                     downloadData(datasetName)
                 netModel = HTTPServices.HTTPHandler.requestModel(myID)
-                modelArch = netModel['Model']
+                modelArch = netModel['Model']['Model']
                 modelID = netModel['ModelID']
-                print(modelArch)
-                accuracy = netHandler.neuralNet.multilayerTrain(datasetLocation, modelArch)
+                parameters = netModel['Model']['Parameters']
+                # accuracy = netHandler.neuralNet.multilayerTrain(datasetLocation, modelArch, parameters)
+                accuracy = random.random()
                 response = {"clientID": myID, 'ModelID': modelID, "results": {"accuracy": str(accuracy)}}
                 if HTTPServices.HTTPHandler.sendResults(response):
                     print("Getting next model...")
