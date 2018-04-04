@@ -44,21 +44,29 @@ def runEvo(threadname, evoState, serverState, server_conn, numClients, maxPop, m
             counter = coreWait(counter, "Waiting for clients to process nets")
         elif serverState.value == 2:
             receivedPop = server_conn.recv()
-            processedPop = evo.transformIntoChrom(receivedPop)
+            #processedPop = evo.transformIntoChrom(receivedPop)
             #time.sleep(5)
-            print("PROCESSED POP")
-            for ind in processedPop:
+            print("RECEIVED PROCESSED POP")
+            for ind in receivedPop:
                 heapq.heappush(pop, (ind['Result'], ind))
                 if len(pop) > maxPop:
                     heapq.heappop(pop)
 
             print()
             for ind in pop:
-                # print(str(ind[0]) + " " + str(ind[1]['Model']))
-                print(ind[1])
+                print(str(ind[0]) + " " + str(ind[1]['Model']) + " " + str(ind[1]['Parameters']))
             print()
+
             mutationRate = 0.2
+
             mutatedPop = evo.nextGen(pop, maxLayers, mutationRate)
+            '''
+            print()
+            for ind in mutatedPop:
+                # print(str(ind[0]) + " " + str(ind[1]['Model']))
+                print(ind)
+            print()
+            '''
             evoState.value = 1
             server_conn.send(mutatedPop)
 

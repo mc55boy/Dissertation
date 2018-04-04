@@ -5,6 +5,7 @@ from deap import tools
 import uuid
 from itertools import repeat
 from collections import Sequence
+import time
 
 globICLS = None
 
@@ -19,9 +20,9 @@ def generateInd(icls, maxLayers, maxNeurons,):
     genome = list()
     # add parameters
 
-    learningRate = 0.005
-    training_epochs = 10
-    batch_size = 100
+    learningRate = random.uniform(0.001, 0.1)
+    training_epochs = random.randint(1, 20)
+    batch_size = random.randint(10, 1000)
 
     genome.append(learningRate)
     genome.append(training_epochs)
@@ -37,13 +38,7 @@ def transformIntoChrom(pop):
     global globICLS
     returnList = list()
     for ind in pop:
-        model = list()
-        model.append(ind['Parameters']['learningRate'])
-        model.append(ind['Parameters']['trainingEpochs'])
-        model.append(ind['Parameters']['batchSize'])
-        model.extend(ind['Model'])
-        print(model)
-        ind['Model'] = globICLS(model)
+        ind['Model'] = globICLS(ind['Model'])
         result = float(ind['Result'])
         ind['Model'].fitness.value = result
         returnList.append(ind)
@@ -76,12 +71,12 @@ def nextGen(pop, maxLayers, mutationRate):
     mutatedPop = list()
     percentageChange = 20
     for ind in pop:
-        mutatedModel = mutate(ind[1]['Model'], percentageChange, maxLayers, mutationRate)
+        mutatedArch, mutatedParams = mutate(ind[1]['Model'], ind[1]['Parameters'], percentageChange, maxLayers, mutationRate)
         modelID = uuid.uuid4().hex
         result = 0.0
         clientID = None
         processed = False
-        tempInd = (result, {'Model': mutatedModel, 'ModelID': modelID, 'clientID': clientID, 'Processed': processed, 'Result': result})
+        tempInd = (result, {'Model': mutatedArch, 'Parameters': mutatedParams, 'ModelID': modelID, 'clientID': clientID, 'Processed': processed, 'Result': result})
         mutatedPop.append(tempInd)
     return mutatedPop
 
@@ -110,7 +105,16 @@ def custMut(individual, low, up, indpb):
     return individual,
 
 
-def mutate(ind, percChange, maxLayers, mutationRate):
+def mutate(architecture, parameters, percChange, maxLayers, mutationRate):
+    ind = list()
+    ind.append(parameters['learningRate'])
+    ind.append(parameters['trainingEpochs'])
+    ind.append(parameters['batchSize'])
+    ind.extend(architecture)
+
+    global globICLS
+    ind = globICLS(ind)
+
     ind = toolbox.clone(ind)
     tmp = toolbox.clone(ind)
     geneSame = True
@@ -130,7 +134,6 @@ def mutate(ind, percChange, maxLayers, mutationRate):
         ind2, = custMut(ind, lowList, highList, mutationRate)
         # Make sure that only the layers are affected by this part as this adds/deletes layers
         if i > 2:
-
             if random.randint(0, 100) < 10 and len(ind2) < (maxLayers + 1):
                 # Calculate the average number of neurons in each layer
                 totalNeurons = 0
@@ -145,9 +148,20 @@ def mutate(ind, percChange, maxLayers, mutationRate):
                 ind2.insert(location, newLayerSize)
 
             if random.randint(0, 100) < 10 and len(ind2) > 1:
-                del ind2[random.randint(0, len(ind2)-1)]
+                # Make sure that there is at least 1 hidden layer
+                if len(ind2) > 4:
+                    del ind2[random.randint(3, len(ind2)-1)]
 
         # Check if the gene has been changed (ensure forced mutation)
         if ind2 != tmp:
             geneSame = False
     del ind2.fitness.values
+    mutatedParams = list()
+    mutatedArch = list()
+    for i, chrom in enumerate(ind2):
+        if i < 3:
+            mutatedParams.append(chrom)
+        else:
+            mutatedArch.append(chrom)
+
+    return mutatedArch, {"learningRate": mutatedParams[0], "trainingEpochs": mutatedParams[1], "batchSize": mutatedParams[2]}

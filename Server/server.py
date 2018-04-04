@@ -95,8 +95,6 @@ def assignModels():
     global currentPopulation
     currentPopulation = list()
     for ind in pop:
-        print("HERE!!!!!!!!!!!!!!!!!!!!")
-        print(ind)
         newInd = {"Model": ind[1]["Model"], "Parameters": ind[1]["Parameters"], "ModelID": ind[1]["ModelID"], "Processed": False, "clientID": None, "Result": 0}
         currentPopulation.append(newInd)
 
