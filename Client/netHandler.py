@@ -2,7 +2,7 @@ from __future__ import print_function
 import tensorflow as tf
 import time
 import numpy as np
-from sys import getsizeof
+from tqdm import trange
 
 totalDataSet = list()
 lastDataSet = None
@@ -78,7 +78,6 @@ class neuralNet:
 
     def multilayerTrain(datasetLocation, layerInput, parameters):
 
-
         netInput = {"structure": {"outputLayer": 10, "inputLayer": 784, "hiddenLayers": layerInput}}
         global lastDataSet
         if lastDataSet is None or not lastDataSet == datasetLocation:
@@ -134,22 +133,17 @@ class neuralNet:
             sess.run(init)
 
             # Training cycle
-            for epoch in range(training_epochs):
+            for epoch in trange(training_epochs, desc='Training'):
                 avg_cost = 0.
                 # Loop over all batches
-                for batch in range(total_batch):
+                for batch in trange(total_batch, desc='Batch', leave=False):
 
                     batch_x = batchedData[batch]
                     batch_y = batchedLabel[batch]
                     _, c = sess.run([train_op, loss_op], feed_dict={inputLayer: batch_x, outputLayer: batch_y})
                     # Compute average loss
                     avg_cost += c / total_batch
-                    if batch % 10 == 0:
-                        print("Batch " + str(batch) + "/" + str(total_batch) + "  cost: " + str(avg_cost))
                     i += batch_size
-                # Display logs per epoch step
-                if epoch % display_step == 0:
-                    print("Epoch:", '%04d' % (epoch+1), "cost={:.9f}".format(avg_cost))
             print("Optimization Finished!")
             end = time.time()
             print("TIME: " + str(end - start))
