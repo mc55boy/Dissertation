@@ -20,6 +20,9 @@ useSamePop = True
 numClients = None
 registeredClients = 0
 numProcessed = 0
+popCount = 0
+
+leftToProcess = 0
 
 
 def newClient():
@@ -79,6 +82,7 @@ def getModel(self):
         jsonData = json.loads(post_data.decode('utf-8'))
         clientID = jsonData['clientID']
         client = next(item for item in connectedClients if item["clientID"] == clientID)
+        # print(json.dumps(connectedClients, indent=4, sort_keys=True))
         for i, item in enumerate(connectedClients):
             if item == client:
                 for model in connectedClients[i]['Model']:
@@ -91,33 +95,80 @@ def getModel(self):
 
 
 def assignModels():
-    pop = evo_conn.recv()
     global currentPopulation
+    global leftToProcess
+
+    pop = evo_conn.recv()
     currentPopulation = list()
+
     for ind in pop:
         newInd = {"Model": ind[1]["Model"], "Parameters": ind[1]["Parameters"], "ModelID": ind[1]["ModelID"], "Processed": False, "clientID": None, "Result": 0}
         currentPopulation.append(newInd)
+        leftToProcess += 1
 
     clientCounter = 0
     for i, model in enumerate(currentPopulation):
+        clientCounter += 1
         if clientCounter >= numClients:
             clientCounter = 0
         connectedClients[clientCounter]['Model'].append(model)
         currentPopulation[i]['clientID'] = connectedClients[clientCounter]['clientID']
 
 
-def ready():
+def ready(self):
     global evoState
     global useSamePop
     global serverState
-    if evoState.value == 1:
-        # serverState.value = 1
+    global numProcessed
+    global leftToProcess
+    global connectedClients
+    # Make sure that all clients are connected (server state above 0)
+    # & make sure that evo has created the population (evo state 1)
+    if evoState.value == 1 and not serverState.value == 0:
+        if useSamePop:
+            assignModels()
+            useSamePop = False
+
+            content_length = int(self.headers['Content-Length'])
+            post_data = self.rfile.read(content_length)
+            global connectedClients
+            try:
+                jsonData = json.loads(post_data.decode('utf-8'))
+                clientID = jsonData['clientID']
+                client = next(item for item in connectedClients if item["clientID"] == clientID)
+                # print(json.dumps(connectedClients, indent=4, sort_keys=True))
+                for i, item in enumerate(connectedClients):
+                    if item == client:
+                        if len(connectedClients[i]['Model']) == 0:
+                            return {'status': 200, 'response': 'False'}
+                            break
+            except StopIteration:
+                return {'status': 500, 'response': "Fucked it"}
+        return {'status': 200, 'response': 'True'}
+    else:
+        return {'status': 200, 'response': 'False'}
+
+'''
+def ready(self):
+    global evoState
+    global useSamePop
+    global serverState
+    global numProcessed
+    global leftToProcess
+    global connectedClients
+
+    print(leftToProcess)
+    print(archsToProcess)
+    # Make sure that all clients are connected (server state above 0)
+    # & make sure that evo has created the population (evo state 1)
+    if evoState.value == 1 and not serverState.value == 0 and (leftToProcess == 0 or archsToProcess):
         if useSamePop:
             assignModels()
             useSamePop = False
         return {'status': 200, 'response': 'True'}
     else:
         return {'status': 200, 'response': 'False'}
+'''
 
 
 def processResult(self):
@@ -125,6 +176,7 @@ def processResult(self):
     global numProcessed
     global useSamePop
     global serverState
+    global leftToProcess
     content_length = int(self.headers['Content-Length'])
     post_data = self.rfile.read(content_length)
 
@@ -141,11 +193,13 @@ def processResult(self):
                         connectedClients[clientNum]['Model'][modelNum]['Result'] = float(result)
                         connectedClients[clientNum]['Model'][modelNum]['Processed'] = True
                         numProcessed += 1
+                        leftToProcess -= 1
                         if numProcessed == len(currentPopulation):
                             useSamePop = True
                             serverState.value = 2
                             evo_conn.send(currentPopulation)
                             numProcessed = 0
+                            leftToProcess = len(currentPopulation)
 
                         else:
                             serverState.value = 1
@@ -156,11 +210,11 @@ def processResult(self):
 
 
 getPaths = {
-    '/getNewID': newClient,
-    '/ready': ready
+    '/getNewID': newClient
 }
 
 postPaths = {
+    '/ready': ready,
     '/getModel': getModel,
     '/getDataset': whichDataset,
     '/registerClient': registerClient,
@@ -212,12 +266,15 @@ class MyHandler(BaseHTTPRequestHandler):
                 self.send_error(404, 'File Not Found: %s' % self.path)
 
 
-def main(evoReady, inputServerState, connection, inputNumClients):
+def main(evoReady, inputServerState, connection, inputNumClients, maxPop):
     try:
         global evoState
         global serverState
         global evo_conn
         global numClients
+        global popCount
+        global numProcessed
+
         serverState = inputServerState
         evoState = evoReady
         evo_conn = connection

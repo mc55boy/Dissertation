@@ -5,7 +5,6 @@ from deap import tools
 import uuid
 from itertools import repeat
 from collections import Sequence
-import time
 
 globICLS = None
 
@@ -30,6 +29,7 @@ def generateInd(icls, maxLayers, maxNeurons,):
     # add layers
     numLayers = random.randint(1, maxLayers)
     for _ in range(numLayers):
+        # genome.append(10)
         genome.append(random.randint(1, maxNeurons))
     return icls(genome)
 

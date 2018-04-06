@@ -8,9 +8,9 @@ import time
 import heapq
 
 
-def runServer(threadname, evoState, serverState, evo_conn, numClients):
+def runServer(threadname, evoState, serverState, evo_conn, numClients, maxPop):
     print(threadname + " running...")
-    server.main(evoState, serverState, evo_conn, numClients)
+    server.main(evoState, serverState, evo_conn, numClients, maxPop)
 
 
 def setupEvo(evoState, datasetInput, numClients, server_conn, maxLayers, maxPop):
@@ -44,8 +44,6 @@ def runEvo(threadname, evoState, serverState, server_conn, numClients, maxPop, m
             counter = coreWait(counter, "Waiting for clients to process nets")
         elif serverState.value == 2:
             receivedPop = server_conn.recv()
-            #processedPop = evo.transformIntoChrom(receivedPop)
-            #time.sleep(5)
             print("RECEIVED PROCESSED POP")
             for ind in receivedPop:
                 heapq.heappush(pop, (ind['Result'], ind))
@@ -60,26 +58,19 @@ def runEvo(threadname, evoState, serverState, server_conn, numClients, maxPop, m
             mutationRate = 0.2
 
             mutatedPop = evo.nextGen(pop, maxLayers, mutationRate)
-            '''
-            print()
-            for ind in mutatedPop:
-                # print(str(ind[0]) + " " + str(ind[1]['Model']))
-                print(ind)
-            print()
-            '''
             evoState.value = 1
             server_conn.send(mutatedPop)
 
 
 def setup(numClients):
     maxLayers = 2
-    maxPop = 5
+    maxPop = 10
 
     server_conn, evo_conn = Pipe()
     evoState = Value('i', 0)
     serverState = Value('i', 0)
 
-    serverThread = Thread(name="Server", target=runServer, args=("ServerThread", evoState, serverState, evo_conn, numClients))
+    serverThread = Thread(name="Server", target=runServer, args=("ServerThread", evoState, serverState, evo_conn, numClients, maxPop))
     evoThread = Thread(name="Evo", target=runEvo, args=("EvoThread", evoState, serverState,  server_conn, numClients, maxPop, maxLayers))
 
     evoThread.start()

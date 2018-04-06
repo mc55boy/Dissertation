@@ -49,7 +49,7 @@ def run():
 
     while True:
 
-        if HTTPServices.HTTPHandler.isReady():
+        if HTTPServices.HTTPHandler.isReady(myID):
             counter = 0
             success, datasetName = HTTPServices.HTTPHandler.whichDataset(myID)
             if success:

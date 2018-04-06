@@ -1,7 +1,6 @@
 import urllib.parse
 import urllib.request
 import json
-import ast
 
 
 def sendGet(url):
@@ -51,8 +50,12 @@ def getModel(myID):
 
 
 class HTTPHandler:
-    def isReady():
-        success, response = sendGet("ready")
+    def isReady(clientID):
+        # success, response = sendGet("ready")
+        dataToSend = json.dumps({'clientID': clientID}).encode('utf-8')
+        url = "/ready"
+        header = {"Content-type": "application/x-www-form-urlencoded", "Accept": "text/plain"}
+        success, response = sendPost(url, dataToSend, header)
         if response == "True":
             return True
         else:
