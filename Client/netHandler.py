@@ -58,9 +58,10 @@ def buildNet(inputNet, inputLayer):
         # newLayer = tf.placeholder("float", [None, newLayer_Size])
         newLayer = tf.placeholder("float", [None, newLayer_Size])
         # Build weights/connections between prev and new layer
+        # newLayer_Weights = tf.Variable(tf.random_normal([existingLayer_Size, newLayer_Size]))
         newLayer_Weights = tf.Variable(tf.random_normal([existingLayer_Size, newLayer_Size]))
         # Build biases for new layer
-        newLayer_Bias = tf.Variable(tf.random_normal([newLayer_Size]))
+        newLayer_Bias = tf.nn.dropout(tf.random_normal([newLayer_Size]), 0.9)
         # connect new layer to prev layer using the created connections and biases
         newLayer = tf.add(tf.matmul(existingLayer, newLayer_Weights), newLayer_Bias)
 
@@ -96,7 +97,7 @@ class neuralNet:
         # training_epochs = 10
         batch_size = parameters["batchSize"]
         # batch_size = 100
-        display_step = 1
+        # display_step = 1
         inputSize = netInput["structure"]["inputLayer"]
         outputClassNum = netInput["structure"]["outputLayer"]
 
@@ -115,6 +116,7 @@ class neuralNet:
 
         loss_op = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=logits, labels=outputLayer))
         optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate)
+        # change "optimizer" potentially to decay learning rate (simulated annealing) in future
         train_op = optimizer.minimize(loss_op)
         # Initializing the variables
         init = tf.global_variables_initializer()

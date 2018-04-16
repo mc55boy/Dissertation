@@ -26,6 +26,7 @@ leftToProcess = 0
 
 
 def newClient():
+    global connectedClients
     newID = uuid.uuid4().hex
     newClient = {"clientID": newID, "Registered": False, "Model": list()}
 
@@ -122,28 +123,31 @@ def ready(self):
     global numProcessed
     global leftToProcess
     global connectedClients
+    global currentPopulation
+
+
     # Make sure that all clients are connected (server state above 0)
     # & make sure that evo has created the population (evo state 1)
-    if evoState.value == 1 and not serverState.value == 0:
-        if useSamePop:
-            assignModels()
-            useSamePop = False
+    if useSamePop and not serverState.value == 0:
+        assignModels()
+        useSamePop = False
 
-            content_length = int(self.headers['Content-Length'])
-            post_data = self.rfile.read(content_length)
-            global connectedClients
-            try:
-                jsonData = json.loads(post_data.decode('utf-8'))
-                clientID = jsonData['clientID']
-                client = next(item for item in connectedClients if item["clientID"] == clientID)
-                # print(json.dumps(connectedClients, indent=4, sort_keys=True))
-                for i, item in enumerate(connectedClients):
-                    if item == client:
-                        if len(connectedClients[i]['Model']) == 0:
-                            return {'status': 200, 'response': 'False'}
-                            break
-            except StopIteration:
-                return {'status': 500, 'response': "Fucked it"}
+    if evoState.value == 1 and not serverState.value == 0:
+        content_length = int(self.headers['Content-Length'])
+        post_data = self.rfile.read(content_length)
+        global connectedClients
+        try:
+            jsonData = json.loads(post_data.decode('utf-8'))
+            clientID = jsonData['clientID']
+            client = next(item for item in connectedClients if item["clientID"] == clientID)
+            # print(json.dumps(connectedClients, indent=4, sort_keys=True))
+            for i, item in enumerate(connectedClients):
+                if item == client:
+                    if len(connectedClients[i]['Model']) == 0:
+                        return {'status': 200, 'response': 'False'}
+                        break
+        except StopIteration:
+            return {'status': 500, 'response': "Fucked it"}
         return {'status': 200, 'response': 'True'}
     else:
         return {'status': 200, 'response': 'False'}
@@ -191,7 +195,8 @@ def processResult(self):
                 for modelNum, model in enumerate(connectedClients[clientNum]['Model']):
                     if model['ModelID'] == modelID:
                         connectedClients[clientNum]['Model'][modelNum]['Result'] = float(result)
-                        connectedClients[clientNum]['Model'][modelNum]['Processed'] = True
+                        #connectedClients[clientNum]['Model'][modelNum]['Processed'] = True
+                        del connectedClients[clientNum]['Model'][modelNum]
                         numProcessed += 1
                         leftToProcess -= 1
                         if numProcessed == len(currentPopulation):

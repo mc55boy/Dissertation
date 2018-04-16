@@ -29,7 +29,7 @@ def generateInd(icls, maxLayers, maxNeurons,):
     # add layers
     numLayers = random.randint(1, maxLayers)
     for _ in range(numLayers):
-        # genome.append(10)
+        #genome.append(10)
         genome.append(random.randint(1, maxNeurons))
     return icls(genome)
 
@@ -68,17 +68,106 @@ def createPop(maxNeurons, maxLayers, numClients, maxPop):
 
 
 def nextGen(pop, maxLayers, mutationRate):
-    mutatedPop = list()
+    nextGen = list()
     percentageChange = 20
-    for ind in pop:
-        mutatedArch, mutatedParams = mutate(ind[1]['Model'], ind[1]['Parameters'], percentageChange, maxLayers, mutationRate)
+
+    crossbreadPop = crossbreed(pop)
+
+    for ind in crossbreadPop:
+        mutatedArch, mutatedParams = mutate(ind[1], percentageChange, maxLayers, mutationRate)
         modelID = uuid.uuid4().hex
         result = 0.0
         clientID = None
         processed = False
         tempInd = (result, {'Model': mutatedArch, 'Parameters': mutatedParams, 'ModelID': modelID, 'clientID': clientID, 'Processed': processed, 'Result': result})
-        mutatedPop.append(tempInd)
-    return mutatedPop
+        nextGen.append(tempInd)
+    return nextGen
+
+
+def fitnessKey(elem):
+    return elem[0]
+
+
+# Selects 10 parent pairs using their fitness to decide chance of being selected
+# Higher fitness = higher chance of being chosen
+def rouletteSelection(pop):
+
+    chosen = list()
+    # Create the same amount of offspring to replace pop
+    for i in range(len(pop)):
+        twoParents = list()
+        sortedPop = sorted(pop, key=fitnessKey)
+        sumFits = sum(ind[0] for ind in sortedPop)
+        # Choose two parents
+        for _ in range(2):
+            u = random.random() * sumFits
+            sum_ = 0
+            for indNum, ind in enumerate(sortedPop):
+                sum_ += ind[0]
+                if sum_ > u:
+                    twoParents.append(ind)
+                    # Delete ind from pop so it can't get chosen again
+                    del sortedPop[indNum]
+                    break
+        chosen.append(twoParents)
+    return chosen
+
+
+# Splits the cross over into two parts:
+#   - Parameters: learning rate, batch size and Epochs
+#   - Hidden layers
+# and performs uniform crossover
+def custCrossOver(parents):
+    # choose which length of chromosome to work with
+    for ind in parents:
+        print(ind)
+    lengthOfChild = len(parents[random.randint(0, 1)])
+    childChrom = list()
+
+    for i in range(3):
+        childChrom.append(parents[random.randint(0, 1)][1][i])
+
+    for i in range(3, lengthOfChild + 1):
+        parentChoice = random.randint(0, 1)
+        print(str(i) + " " + str(len(parents[parentChoice][1])))
+        if len(parents[parentChoice][1]) >= i:
+            childChrom.append(parents[parentChoice][1][i])
+        else:
+            if parentChoice == 0:
+                childChrom.append(parents[1][1][i])
+            else:
+                childChrom.append(parents[0][1][i])
+    return childChrom
+
+
+def crossbreed(pop):
+    editPop = list()
+    for ind in pop:
+        # add result first to keep data structure
+        indData = list()
+        indData.append(ind[0])
+
+        # add chromosome to indData[1]
+        # All chromosome is simply a list to make processing easier
+        chromosome = list()
+        chromosome.append(ind[1]['Parameters']['learningRate'])
+        chromosome.append(ind[1]['Parameters']['trainingEpochs'])
+        chromosome.append(ind[1]['Parameters']['batchSize'])
+        chromosome.extend(ind[1]['Model'])
+        indData.append(chromosome)
+        editPop.append(indData)
+
+    parentPairs = rouletteSelection(editPop)
+
+    offspring = list()
+
+    for parents in parentPairs:
+        child = custCrossOver(parents)
+        print(child)
+        print()
+        offspring.append(child)
+
+    return offspring
 
 
 # Slightly edited method taken from the DEAP library to handle custom gene
@@ -105,12 +194,14 @@ def custMut(individual, low, up, indpb):
     return individual,
 
 
-def mutate(architecture, parameters, percChange, maxLayers, mutationRate):
-    ind = list()
+def mutate(chromosome, percChange, maxLayers, mutationRate):
+    ind = chromosome
+    '''
     ind.append(parameters['learningRate'])
     ind.append(parameters['trainingEpochs'])
     ind.append(parameters['batchSize'])
     ind.extend(architecture)
+    '''
 
     global globICLS
     ind = globICLS(ind)
