@@ -63,8 +63,8 @@ def runEvo(threadname, evoState, serverState, server_conn, numClients, maxPop, m
 
 
 def setup(numClients):
-    maxLayers = 5
-    maxPop = 5
+    maxLayers = 3
+    maxPop = 3
 
     server_conn, evo_conn = Pipe()
     evoState = Value('i', 0)

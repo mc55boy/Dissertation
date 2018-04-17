@@ -62,8 +62,8 @@ def run():
                 modelArch = netModel['Model']['Model']
                 modelID = netModel['ModelID']
                 parameters = netModel['Model']['Parameters']
-                # accuracy = netHandler.neuralNet.multilayerTrain(datasetLocation, modelArch, parameters)
-                accuracy = random.random()
+                accuracy = netHandler.neuralNet.multilayerTrain(datasetLocation, modelArch, parameters)
+                #accuracy = random.random()
                 #time.sleep(0.3)
                 response = {"clientID": myID, 'ModelID': modelID, "results": {"accuracy": str(accuracy)}}
                 if HTTPServices.HTTPHandler.sendResults(response):

@@ -152,28 +152,6 @@ def ready(self):
     else:
         return {'status': 200, 'response': 'False'}
 
-'''
-def ready(self):
-    global evoState
-    global useSamePop
-    global serverState
-    global numProcessed
-    global leftToProcess
-    global connectedClients
-
-    print(leftToProcess)
-    print(archsToProcess)
-    # Make sure that all clients are connected (server state above 0)
-    # & make sure that evo has created the population (evo state 1)
-    if evoState.value == 1 and not serverState.value == 0 and (leftToProcess == 0 or archsToProcess):
-        if useSamePop:
-            assignModels()
-            useSamePop = False
-        return {'status': 200, 'response': 'True'}
-    else:
-        return {'status': 200, 'response': 'False'}
-'''
-
 
 def processResult(self):
     global currentPopulation

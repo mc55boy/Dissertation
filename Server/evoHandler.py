@@ -74,7 +74,7 @@ def nextGen(pop, maxLayers, mutationRate):
     crossbreadPop = crossbreed(pop)
 
     for ind in crossbreadPop:
-        mutatedArch, mutatedParams = mutate(ind[1], percentageChange, maxLayers, mutationRate)
+        mutatedArch, mutatedParams = mutate(ind, percentageChange, maxLayers, mutationRate)
         modelID = uuid.uuid4().hex
         result = 0.0
         clientID = None
@@ -97,9 +97,11 @@ def rouletteSelection(pop):
     for i in range(len(pop)):
         twoParents = list()
         sortedPop = sorted(pop, key=fitnessKey)
-        sumFits = sum(ind[0] for ind in sortedPop)
         # Choose two parents
         for _ in range(2):
+            # Calc sum fit for both selections as during the second run a potential
+            # parent has been removed
+            sumFits = sum(ind[0] for ind in sortedPop)
             u = random.random() * sumFits
             sum_ = 0
             for indNum, ind in enumerate(sortedPop):
@@ -119,18 +121,15 @@ def rouletteSelection(pop):
 # and performs uniform crossover
 def custCrossOver(parents):
     # choose which length of chromosome to work with
-    for ind in parents:
-        print(ind)
-    lengthOfChild = len(parents[random.randint(0, 1)])
+    lengthOfChild = len(parents[random.randint(0, 1)][1])
     childChrom = list()
 
     for i in range(3):
         childChrom.append(parents[random.randint(0, 1)][1][i])
 
-    for i in range(3, lengthOfChild + 1):
+    for i in range(3, lengthOfChild):
         parentChoice = random.randint(0, 1)
-        print(str(i) + " " + str(len(parents[parentChoice][1])))
-        if len(parents[parentChoice][1]) >= i:
+        if len(parents[parentChoice][1]) > i:
             childChrom.append(parents[parentChoice][1][i])
         else:
             if parentChoice == 0:
@@ -162,10 +161,7 @@ def crossbreed(pop):
     offspring = list()
 
     for parents in parentPairs:
-        child = custCrossOver(parents)
-        print(child)
-        print()
-        offspring.append(child)
+        offspring.append(custCrossOver(parents))
 
     return offspring
 
