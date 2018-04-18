@@ -64,7 +64,7 @@ def runEvo(threadname, evoState, serverState, server_conn, numClients, maxPop, m
 
 def setup(numClients):
     maxLayers = 3
-    maxPop = 3
+    maxPop = 10
 
     server_conn, evo_conn = Pipe()
     evoState = Value('i', 0)
@@ -81,6 +81,6 @@ def setup(numClients):
 
 # print(multiprocessing.cpu_count())
 # print(len(os.sched_getaffinity(0)))
-numClients = 1
+numClients = 4
 
 setup(numClients)

@@ -2,7 +2,6 @@ import httpClient as HTTPServices
 import os
 import tarfile
 import netHandler as netHandler
-import random
 import time
 
 
@@ -42,6 +41,7 @@ def clientWait(counter, message):
     if counter == 5:
         counter = 0
     print(" " * 50, end="\r")
+    time.sleep(0.3)
     return counter
 
 
