@@ -4,6 +4,7 @@ import time
 import numpy as np
 from tqdm import trange
 
+
 totalDataSet = list()
 lastDataSet = None
 

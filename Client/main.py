@@ -3,6 +3,7 @@ import os
 import tarfile
 import netHandler as netHandler
 import time
+import random
 
 
 myID = None
@@ -40,8 +41,8 @@ def clientWait(counter, message):
     counter += 1
     if counter == 5:
         counter = 0
-    print(" " * 50, end="\r")
     time.sleep(0.3)
+    print(" " * 50, end="\r")
     return counter
 
 
@@ -62,9 +63,9 @@ def run():
                 modelArch = netModel['Model']['Model']
                 modelID = netModel['ModelID']
                 parameters = netModel['Model']['Parameters']
-                accuracy = netHandler.neuralNet.multilayerTrain(datasetLocation, modelArch, parameters)
-                #accuracy = random.random()
-                #time.sleep(0.3)
+                #accuracy = netHandler.neuralNet.multilayerTrain(datasetLocation, modelArch, parameters)
+                accuracy = random.random()
+                time.sleep(0.5)
                 response = {"clientID": myID, 'ModelID': modelID, "results": {"accuracy": str(accuracy)}}
                 if HTTPServices.HTTPHandler.sendResults(response):
                     print("Getting next model...")
@@ -73,7 +74,7 @@ def run():
             else:
                 print("Failed to get Dataset name")
         else:
-            clientWait(counter, "Waiting for server to process new models")
+            counter = clientWait(counter, "Waiting for server to process new models")
 
 
 if setup():

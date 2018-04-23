@@ -1,11 +1,10 @@
 from threading import Thread
 from multiprocessing import Value, Pipe
-# import multiprocessing
-# import os
 import server as server
 import evoHandler as evo
 import time
 import heapq
+import csv
 
 
 def runServer(threadname, evoState, serverState, evo_conn, numClients, maxPop):
@@ -31,6 +30,11 @@ def coreWait(counter, message):
     return counter
 
 
+def convertToCSV(ind):
+    row = str(ind[0]) + "," + str(ind[1]["Model"]) + "," + str(ind[1]["Parameters"]["learningRate"]) + "," + str(ind[1]["Parameters"]["batchSize"]) + "," + str(ind[1]["Parameters"]["trainingEpochs"])
+    return row
+
+
 def runEvo(threadname, evoState, serverState, server_conn, numClients, maxPop, maxLayers):
     numInput = 784
     setupEvo(evoState, numInput, numClients, server_conn, maxLayers, maxPop)
@@ -40,7 +44,6 @@ def runEvo(threadname, evoState, serverState, server_conn, numClients, maxPop, m
         if serverState.value == 0:
             counter = coreWait(counter, "Waiting for clients")
         elif serverState.value == 1:
-            # evoState.value = 0
             counter = coreWait(counter, "Waiting for clients to process nets")
         elif serverState.value == 2:
             receivedPop = server_conn.recv()
@@ -55,8 +58,12 @@ def runEvo(threadname, evoState, serverState, server_conn, numClients, maxPop, m
                 print(str(ind[0]) + " " + str(ind[1]['Model']) + " " + str(ind[1]['Parameters']))
             print()
 
+            with open("result.csv", 'a') as resultsFile:
+                wr = csv.writer(resultsFile, lineterminator='\n')
+                for ind in pop:
+                    wr.writerow([convertToCSV(ind)])
+            print(len(pop))
             mutationRate = 0.2
-
             mutatedPop = evo.nextGen(pop, maxLayers, mutationRate)
             evoState.value = 1
             server_conn.send(mutatedPop)
@@ -81,6 +88,6 @@ def setup(numClients):
 
 # print(multiprocessing.cpu_count())
 # print(len(os.sched_getaffinity(0)))
-numClients = 4
+numClients = 1
 
 setup(numClients)

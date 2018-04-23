@@ -1,8 +1,8 @@
 from os import curdir, sep
 import uuid
 from http.server import BaseHTTPRequestHandler, HTTPServer
-from socketserver import ThreadingMixIn
-import threading
+#from socketserver import ThreadingMixIn
+#import threading
 import json
 
 
@@ -251,8 +251,8 @@ class MyHandler(BaseHTTPRequestHandler):
                 self.send_error(404, 'File Not Found: %s' % self.path)
 
 
-class ThreadedHTTPServer(ThreadingMixIn, HTTPServer):
-    '''Nothing here '''
+#class ThreadedHTTPServer(ThreadingMixIn, HTTPServer):
+#    '''Nothing here '''
 
 
 def main(evoReady, inputServerState, connection, inputNumClients, maxPop):
@@ -266,8 +266,8 @@ def main(evoReady, inputServerState, connection, inputNumClients, maxPop):
         evoState = evoReady
         evo_conn = connection
         numClients = inputNumClients
-        #server = HTTPServer(('', 9000), MyHandler)
-        server = ThreadedHTTPServer(('', 9000), MyHandler)
+        server = HTTPServer(('', 9000), MyHandler)
+        #server = ThreadedHTTPServer(('', 9000), MyHandler)
         print('started httpserver...')
         server.serve_forever()
     except KeyboardInterrupt:

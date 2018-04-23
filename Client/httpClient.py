@@ -1,32 +1,55 @@
 import urllib.parse
 import urllib.request
 import json
+import time
+
+
+def httpWait(counter, message):
+    b = message + "." * counter
+    print(b, end="\r")
+    counter += 1
+    if counter == 5:
+        counter = 0
+    time.sleep(0.5)
+    print(" " * 50, end="\r")
+    return counter
 
 
 def sendGet(url):
-    try:
-        httpResponse = urllib.request.urlopen("http://localhost:9000/" + url).read()
-        response = httpResponse.decode("utf-8")
-        return True, response
-    except urllib.error.URLError as e:
-        return False, e.reason
+    success = False
+    response = None
+    counter = 0
+    while not success:
+        try:
+            httpResponse = urllib.request.urlopen("http://localhost:9000/" + url).read()
+            response = httpResponse.decode("utf-8")
+            success = True
+            #return True, response
+        except urllib.error.URLError as e:
+            response = e.reason
+            counter = httpWait(counter, "GET request failed. Attempting again")
+            #return False, e.reason
+    return success, response
 
 
 def sendPost(url, dataToSend, header):
     success = False
+    counter = 0
+    while not success:
+        try:
+            request = urllib.request.Request("http://localhost:9000" + url, data=dataToSend, headers=header)
+            response = urllib.request.urlopen(request)
 
-    request = urllib.request.Request("http://localhost:9000" + url, data=dataToSend, headers=header)
-    response = urllib.request.urlopen(request)
+            if response.status == 200:
+                success = True
+            elif response.status == 404:
+                #print("Not found")
+                counter = httpWait(counter, "Address not found")
+            else:
+                counter = httpWait(counter, "Server error. Attempting again")
+        except urllib.error.URLError as e:
+            counter = httpWait(counter, "Server error. Attempting again")
 
-    if response.status == 200:
-        success = True
-    elif response.status == 404:
-        print("Not found")
-    elif response.status == 500:
-        print("SERVER ERROR")
-        print(response.read())
-    else:
-        print("Connection failed")
     return success, response.read().decode('utf-8')
 
 
