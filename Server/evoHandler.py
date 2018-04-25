@@ -5,11 +5,14 @@ from deap import tools
 import uuid
 from itertools import repeat
 from collections import Sequence
+import csv
+import re
 
 globICLS = None
 
 toolbox = base.Toolbox()
 population = list()
+newCreator = True
 
 
 # At the moment all it does is generate a random number of layers filled with neurons
@@ -45,12 +48,57 @@ def transformIntoChrom(pop):
     return returnList
 
 
-def createPop(maxNeurons, maxLayers, numClients, maxPop):
+def readCSV(loadPrevious):
+    pop = list()
+    with open(loadPrevious, "r") as resultsFile:
+        reader = csv.reader(resultsFile, delimiter=",")
+        for row in reader:
+            for indString in row:
+                model = list()
+                paramString = indString[indString.find('],')+2:]
+                paramStringList = paramString.split(",")
+                model.append(float(paramStringList[0]))
+                model.append(int(paramStringList[1]))
+                model.append(int(paramStringList[2]))
+                modelStringList = re.findall(r'\[(.*?)\]', indString)
+                tmp = modelStringList[0].split(",")
+                arch = list()
+                for ind in tmp:
+                    arch.append(int(ind))
+                model.append(arch)
+                pop.append(model)
+    return pop
+
+
+def loadPop(loadPrevious, maxPop):
     global population
-    creator.create("FitnessMax", base.Fitness, weights=(1.0, ))
-    creator.create("Individual", list, fitness=creator.FitnessMax)
-    toolbox.register("individual", generateInd, creator.Individual, maxLayers, maxNeurons)
-    toolbox.register("population", tools.initRepeat, list, toolbox.individual)
+    global newCreator
+    global globICLS
+
+    if newCreator:
+        creator.create("FitnessMax", base.Fitness, weights=(1.0, ))
+        creator.create("Individual", list, fitness=creator.FitnessMax)
+        globICLS = creator.Individual
+        newCreator = False
+
+    pop = readCSV(loadPrevious)
+
+    for ind in pop[len(pop)-maxPop:]:
+        newInd = (0.0, {"Parameters": {"learningRate": ind[0], "trainingEpochs": ind[1], "batchSize": ind[2]}, "Model": ind[3], "ModelID": uuid.uuid4().hex})
+        population.append(creator.Individual(newInd))
+    return population
+
+
+def createPop(maxNeurons, maxLayers, maxPop):
+    global population
+    global newCreator
+
+    if newCreator:
+        creator.create("FitnessMax", base.Fitness, weights=(1.0, ))
+        creator.create("Individual", list, fitness=creator.FitnessMax)
+        toolbox.register("individual", generateInd, creator.Individual, maxLayers, maxNeurons)
+        toolbox.register("population", tools.initRepeat, list, toolbox.individual)
+        newCreator = False
     pop = toolbox.population(maxPop)
     print("Population Created...")
     for ind in pop:
@@ -226,7 +274,7 @@ def mutate(chromosome, percChange, maxLayers, mutationRate):
                 totalNeurons = 0
                 for i in range(3, len(ind2)-1):
                     totalNeurons += ind2[i]
-                avNeurons = totalNeurons / ((len(ind2)-1) - 3)
+                avNeurons = totalNeurons / (len(ind2) - 3)
 
                 # Create random size of new layer using normal distr
                 newLayerSize = int(random.gauss(avNeurons, 1))

@@ -9,6 +9,7 @@ totalDataSet = list()
 lastDataSet = None
 
 
+
 def loadMNIST(datasetLocation):
 
     MNIST_Files = ["train-images.idx3-ubyte", "train-labels.idx1-ubyte", "t10k-images.idx3-ubyte", "t10k-labels.idx1-ubyte"]
@@ -73,7 +74,8 @@ def buildNet(inputNet, inputLayer):
     outputWeights = tf.Variable(tf.random_normal([existingLayer_Size, outputClasses]))
     outputBias = tf.Variable(tf.random_normal([outputClasses]))
     outputLayer = tf.matmul(existingLayer, outputWeights) + outputBias
-    return outputLayer
+    saver = tf.train.Saver()
+    return saver, outputLayer
 
 
 class neuralNet:
@@ -111,7 +113,7 @@ class neuralNet:
 
         inputLayer = tf.placeholder("float", [None, inputSize])
         outputLayer = tf.placeholder("float", [None, outputClassNum])
-        logits = buildNet(netInput, inputLayer)
+        saver, logits = buildNet(netInput, inputLayer)
         #logits = multilayer_perceptron(X)
         # Define loss and optimizer
 
@@ -147,9 +149,11 @@ class neuralNet:
                     # Compute average loss
                     avg_cost += c / total_batch
                     i += batch_size
+                save_path = saver.save(sess, "Models/model.ckpt")
             print("Optimization Finished!")
             end = time.time()
             print("TIME: " + str(end - start))
+            print("Model saved under " + save_path)
             # Test model
             pred = tf.nn.softmax(logits)  # Apply softmax to logits
             correct_prediction = tf.equal(tf.argmax(pred, 1), tf.argmax(outputLayer, 1))
@@ -160,4 +164,4 @@ class neuralNet:
             return accuracyOutput
 
 
-#neuralNet.multilayerTrain("Data/MNIST_data/", [2, 784, 392, 191, 90])
+#neuralNet.multilayerTrain("Data/MNIST_data/", [2], {"learningRate": 0.01, "trainingEpochs": 1, "batchSize": 1000})
