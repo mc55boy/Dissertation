@@ -7,6 +7,8 @@ import heapq
 import csv
 import os.path
 
+pop = list()
+
 
 def runServer(threadname, evoState, serverState, evo_conn, numClients, maxPop):
     print(threadname + " running...")
@@ -19,7 +21,11 @@ def setupEvo(evoState, datasetInput, server_conn, maxLayers, maxPop, loadPreviou
         population = evo.createPop(datasetInput, maxLayers, maxPop)
     else:
         print("Loading architectures from " + loadPrevious)
-        population = evo.loadPop(loadPrevious, maxPop)
+        returnPop = evo.loadPop(loadPrevious, maxPop)
+        global pop
+        for ind in returnPop:
+            heapq.heappush(pop, (ind["Result"], ind))
+        population = evo.nextGen(returnPop, maxLayers, 0.1)
     server_conn.send(population)
     evoState.value = 1
 
@@ -36,7 +42,7 @@ def coreWait(counter, message):
 
 
 def convertToCSV(ind):
-    row = str(ind[0]) + "," + str(ind[1]["Model"]) + "," + str(ind[1]["Parameters"]["learningRate"]) + "," + str(ind[1]["Parameters"]["trainingEpochs"]) + "," + str(ind[1]["Parameters"]["batchSize"])
+    row = str(ind['Result']) + "," + str(ind["Parameters"]["learningRate"]) + "," + str(ind["Parameters"]["trainingEpochs"]) + "," + str(ind["Parameters"]["batchSize"]) + "," + str(ind["Model"])
     return row
 
 
@@ -62,14 +68,18 @@ def checkPopIntegrity(loadPrevious, maxPop, datasetInput, maxLayers):
             print("Loading failed. Restarting system...")
             returnPop.clear()
             returnPop = evo.createPop(datasetInput, maxLayers, maxPop)
-
         return returnPop
+
+
+def sort_key(d):
+    return d['Result']
 
 
 def runEvo(threadname, evoState, serverState, server_conn, numClients, maxPop, maxLayers, loadPrevious):
     numInput = 784
     setupEvo(evoState, numInput, server_conn, maxLayers, maxPop, loadPrevious)
     counter = 0
+    global pop
     pop = list()
     while True:
         if serverState.value == 0:
@@ -79,37 +89,63 @@ def runEvo(threadname, evoState, serverState, server_conn, numClients, maxPop, m
         elif serverState.value == 2:
             receivedPop = server_conn.recv()
             try:
+                '''
+                print("RECEIVED:")
+                for ind in receivedPop:
+                    print(ind)
+
                 for ind in receivedPop:
                     heapq.heappush(pop, (ind['Result'], ind))
                     if len(pop) > maxPop:
                         heapq.heappop(pop)
+                '''
+                for ind in receivedPop:
+                    pop.append(ind)
+                    if len(pop) > maxPop:
+                        lowest = 1.0
+                        toReplace = None
+                        for i, replace in enumerate(pop):
+                            if replace['Result'] < lowest:
+                                toReplace = i
+                                lowest = replace['Result']
+                        if toReplace is not None:
+                            del pop[toReplace]
 
                 print()
+                sorted(pop, key=sort_key, reverse=True)
                 for ind in pop:
-                    print(str(ind[0]) + " " + str(ind[1]['Model']) + " " + str(ind[1]['Parameters']))
+                    print(str(ind['Result']) + " " + str(ind['Model']) + " " + str(ind['Parameters']))
                 print()
 
                 with open("result.csv", 'a') as resultsFile:
                     wr = csv.writer(resultsFile, lineterminator='\n')
                     for ind in pop:
                         wr.writerow([convertToCSV(ind)])
-                mutationRate = 0.2
+                mutationRate = 0.1
                 mutatedPop = evo.nextGen(pop, maxLayers, mutationRate)
+                '''
+                print("MUTATED POP:")
+                for ind in mutatedPop:
+                    print(ind)
+                '''
                 evoState.value = 1
                 server_conn.send(mutatedPop)
             except TypeError:
                 print("Failure. Deleting pop and loading previous saved state")
                 pop.clear()
                 pop = checkPopIntegrity(loadPrevious, maxPop, numInput, maxLayers)
+                mutatedPop = evo.nextGen(pop, maxLayers, mutationRate)
                 evoState.value = 1
-                server_conn.send(pop)
+                server_conn.send(mutatedPop)
 
 
 def setup(numClients):
-    maxLayers = 4
-    maxPop = 10
+    maxLayers = 5
+    maxPop = 40
 
-    loadPrevious = "testLoad.csv"
+    #loadPrevious = "result.csv"
+
+    loadPrevious = "None"
 
     server_conn, evo_conn = Pipe()
     evoState = Value('i', 0)
@@ -126,6 +162,6 @@ def setup(numClients):
 
 # print(multiprocessing.cpu_count())
 # print(len(os.sched_getaffinity(0)))
-numClients = 3
+numClients = 4
 
 setup(numClients)

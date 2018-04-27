@@ -103,9 +103,8 @@ def assignModels():
 
     pop = evo_conn.recv()
     currentPopulation = list()
-
     for ind in pop:
-        newInd = {"Model": ind[1]["Model"], "Parameters": ind[1]["Parameters"], "ModelID": ind[1]["ModelID"], "Processed": False, "clientID": None, "Result": 0}
+        newInd = {"Model": ind["Model"], "Parameters": ind["Parameters"], "ModelID": ind["ModelID"], "Processed": False, "clientID": None, "Result": 0}
         currentPopulation.append(newInd)
         leftToProcess += 1
 

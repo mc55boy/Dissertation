@@ -55,18 +55,27 @@ def readCSV(loadPrevious):
         for row in reader:
             for indString in row:
                 model = list()
-                paramString = indString[indString.find('],')+2:]
+                #accuracy = float(indString[:indString.find(',')])
+                #print(accuracy)
+                paramString = indString[:indString.find(',[')]
+                #print(paramString)
                 paramStringList = paramString.split(",")
-                model.append(float(paramStringList[0]))
-                model.append(int(paramStringList[1]))
+                accuracy = float(paramStringList[0])
+                model.append(float(paramStringList[1]))
                 model.append(int(paramStringList[2]))
-                modelStringList = re.findall(r'\[(.*?)\]', indString)
-                tmp = modelStringList[0].split(",")
+                model.append(int(paramStringList[3]))
+
+                archString = indString[indString.find('[')+1:indString.find(']')]
+                archStringList = archString.split(",")
+
                 arch = list()
-                for ind in tmp:
+                for ind in archStringList:
                     arch.append(int(ind))
                 model.append(arch)
-                pop.append(model)
+                ind = list()
+                ind.append(accuracy)
+                ind.append(model)
+                pop.append(ind)
     return pop
 
 
@@ -82,10 +91,11 @@ def loadPop(loadPrevious, maxPop):
         newCreator = False
 
     pop = readCSV(loadPrevious)
-
     for ind in pop[len(pop)-maxPop:]:
-        newInd = (0.0, {"Parameters": {"learningRate": ind[0], "trainingEpochs": ind[1], "batchSize": ind[2]}, "Model": ind[3], "ModelID": uuid.uuid4().hex})
-        population.append(creator.Individual(newInd))
+        newInd = {"Result": ind[0], "Parameters": {"learningRate": ind[1][0], "trainingEpochs": ind[1][1], "batchSize": ind[1][2]}, "Model": ind[1][3], "ModelID": uuid.uuid4().hex}
+        #newInd = creator.Individual(newInd)
+        #newInd.fitness.value = ind[0]
+        population.append(newInd)
     return population
 
 
@@ -110,14 +120,14 @@ def createPop(maxNeurons, maxLayers, maxPop):
                 parameters.append(chrom)
             else:
                 model.append(chrom)
-        newInd = (0.0, {"Parameters": {"learningRate": parameters[0], "trainingEpochs": parameters[1], "batchSize": parameters[2]}, "Model": model, "ModelID": uuid.uuid4().hex})
+        newInd = {"Result": 0.0, "Parameters": {"learningRate": parameters[0], "trainingEpochs": parameters[1], "batchSize": parameters[2]}, "Model": model, "ModelID": uuid.uuid4().hex}
         population.append(newInd)
     return population
 
 
 def nextGen(pop, maxLayers, mutationRate):
     nextGen = list()
-    percentageChange = 20
+    percentageChange = 15
 
     crossbreadPop = crossbreed(pop)
 
@@ -127,7 +137,7 @@ def nextGen(pop, maxLayers, mutationRate):
         result = 0.0
         clientID = None
         processed = False
-        tempInd = (result, {'Model': mutatedArch, 'Parameters': mutatedParams, 'ModelID': modelID, 'clientID': clientID, 'Processed': processed, 'Result': result})
+        tempInd = {'Result': result, 'Model': mutatedArch, 'Parameters': mutatedParams, 'ModelID': modelID, 'clientID': clientID, 'Processed': processed}
         nextGen.append(tempInd)
     return nextGen
 
@@ -192,15 +202,15 @@ def crossbreed(pop):
     for ind in pop:
         # add result first to keep data structure
         indData = list()
-        indData.append(ind[0])
+        indData.append(ind['Result'])
 
         # add chromosome to indData[1]
         # All chromosome is simply a list to make processing easier
         chromosome = list()
-        chromosome.append(ind[1]['Parameters']['learningRate'])
-        chromosome.append(ind[1]['Parameters']['trainingEpochs'])
-        chromosome.append(ind[1]['Parameters']['batchSize'])
-        chromosome.extend(ind[1]['Model'])
+        chromosome.append(ind['Parameters']['learningRate'])
+        chromosome.append(ind['Parameters']['trainingEpochs'])
+        chromosome.append(ind['Parameters']['batchSize'])
+        chromosome.extend(ind['Model'])
         indData.append(chromosome)
         editPop.append(indData)
 
@@ -240,13 +250,6 @@ def custMut(individual, low, up, indpb):
 
 def mutate(chromosome, percChange, maxLayers, mutationRate):
     ind = chromosome
-    '''
-    ind.append(parameters['learningRate'])
-    ind.append(parameters['trainingEpochs'])
-    ind.append(parameters['batchSize'])
-    ind.extend(architecture)
-    '''
-
     global globICLS
     ind = globICLS(ind)
 
@@ -268,24 +271,23 @@ def mutate(chromosome, percChange, maxLayers, mutationRate):
 
         ind2, = custMut(ind, lowList, highList, mutationRate)
         # Make sure that only the layers are affected by this part as this adds/deletes layers
-        if i > 2:
-            if random.randint(0, 100) < 10 and len(ind2) < (maxLayers + 1):
-                # Calculate the average number of neurons in each layer
-                totalNeurons = 0
-                for i in range(3, len(ind2)-1):
-                    totalNeurons += ind2[i]
-                avNeurons = totalNeurons / (len(ind2) - 3)
+        if random.randint(0, 100) < 10 and len(ind2) < (maxLayers + 4):
+            # Calculate the average number of neurons in each layer
+            totalNeurons = 0
+            for i in range(3, len(ind2)):
+                totalNeurons += ind2[i]
+            avNeurons = totalNeurons / (len(ind2) - 3)
 
-                # Create random size of new layer using normal distr
-                newLayerSize = int(random.gauss(avNeurons, 1))
-                # Create random insert point
-                location = random.randint(3, len(ind2)-1)
-                ind2.insert(location, newLayerSize)
+            # Create random size of new layer using normal distr
+            newLayerSize = int(random.gauss(avNeurons, 50))
+            if newLayerSize < 1:
+                newLayerSize = 10
+            # Create random insert point
+            location = random.randint(3, len(ind2)-1)
+            ind2.insert(location, newLayerSize)
 
-            if random.randint(0, 100) < 10 and len(ind2) > 1:
-                # Make sure that there is at least 1 hidden layer
-                if len(ind2) > 4:
-                    del ind2[random.randint(3, len(ind2)-1)]
+        if random.randint(0, 100) < 10 and len(ind2) > 4:
+            del ind2[random.randint(3, len(ind2)-1)]
 
         # Check if the gene has been changed (ensure forced mutation)
         if ind2 != tmp:
@@ -298,5 +300,4 @@ def mutate(chromosome, percChange, maxLayers, mutationRate):
             mutatedParams.append(chrom)
         else:
             mutatedArch.append(chrom)
-
     return mutatedArch, {"learningRate": mutatedParams[0], "trainingEpochs": mutatedParams[1], "batchSize": mutatedParams[2]}
