@@ -1,32 +1,45 @@
 from os import curdir, sep
 import uuid
 from http.server import BaseHTTPRequestHandler, HTTPServer
-#from socketserver import ThreadingMixIn
-#import threading
 import json
 
+'''
+SERVER STATES:
+0 = Waiting for clients to register with server
+1 = Waiting for clients to process networks
+2 = Networks have been processed and next generation is being processed
 
-# POTENTIALLY IMPLEMENT FOR THE MESSAGES TO SEND BACK JSON OR XML TO MAKE IT EASIER TO PROCESS DATA
-# ON THE CLIENT END
+EVO STATES:
+0 = Population not generate
+1 = Population ready to use
+'''
+
 
 # Global variables
 
+# Dataset location
 datasetInUse = None
-connectedClients = [None]
 
+# Client global variables
+connectedClients = [None]
+numClients = 0
+registeredClients = 0
+
+# Population global variables
+currentPopulation = list()
+numProcessed = 0
+popCount = 0
+leftToProcess = 0
+
+# Threading global variables used for ready signal and
+# population transfer
 evoState = None
 serverState = None
 evo_conn = None
-currentPopulation = list()
 useSamePop = True
-numClients = None
-registeredClients = 0
-numProcessed = 0
-popCount = 0
-
-leftToProcess = 0
 
 
+# Returns a UUID for client registration
 def newClient():
     global connectedClients
     newID = uuid.uuid4().hex
@@ -40,25 +53,21 @@ def newClient():
     return {'status': 200, 'response': str(newID)}
 
 
+# Returns the current dataset in use to Client
 def whichDataset(self):
-    datasetInUse = "MNIST_data/"
+    global datasetInUse
     response = {'status': 200, 'response': datasetInUse}
     return response
 
 
-def transformModel(ind):
-    returnList = []
-    for item in ind:
-        returnList.append(item)
-    return ' '.join(str(e) for e in returnList)
-
-
+# Uses UUID sent from Client to fully register
 def registerClient(self):
     global connectedClients
     content_length = int(self.headers['Content-Length'])
     post_data = self.rfile.read(content_length)
     jsonData = json.loads(post_data.decode('utf-8'))
     clientID = jsonData['clientID']
+    # Find clientID in generated clients and register if found
     try:
         client = next(item for item in connectedClients if item["clientID"] == clientID)
         for i, item in enumerate(connectedClients):
@@ -77,6 +86,7 @@ def registerClient(self):
         return {'status': 500, 'response': "Client not found"}
 
 
+# Returns model for particular client by searching for ClientID in registerClient
 def getModel(self):
     content_length = int(self.headers['Content-Length'])
     post_data = self.rfile.read(content_length)
@@ -85,7 +95,6 @@ def getModel(self):
         jsonData = json.loads(post_data.decode('utf-8'))
         clientID = jsonData['clientID']
         client = next(item for item in connectedClients if item["clientID"] == clientID)
-        # print(json.dumps(connectedClients, indent=4, sort_keys=True))
         for i, item in enumerate(connectedClients):
             if item == client:
                 for model in connectedClients[i]['Model']:
@@ -97,10 +106,11 @@ def getModel(self):
         return {'status': 500, 'response': "Client not found"}
 
 
+# Distribute models equally amongst registered clients
 def assignModels():
     global currentPopulation
     global leftToProcess
-
+    # Receive population from thread pipe
     pop = evo_conn.recv()
     currentPopulation = list()
     for ind in pop:
@@ -117,6 +127,8 @@ def assignModels():
         currentPopulation[i]['clientID'] = connectedClients[clientCounter]['clientID']
 
 
+# If both server and evoHandler are in the correct states + clients have
+# a network still assigned to them
 def ready(self):
     global evoState
     global useSamePop
@@ -133,6 +145,7 @@ def ready(self):
         assignModels()
         useSamePop = False
 
+    # Make sure that new population has been generated + all clients have been registered
     if evoState.value == 1 and not serverState.value == 0:
         content_length = int(self.headers['Content-Length'])
         post_data = self.rfile.read(content_length)
@@ -141,7 +154,6 @@ def ready(self):
             jsonData = json.loads(post_data.decode('utf-8'))
             clientID = jsonData['clientID']
             client = next(item for item in connectedClients if item["clientID"] == clientID)
-            # print(json.dumps(connectedClients, indent=4, sort_keys=True))
             for i, item in enumerate(connectedClients):
                 if item == client:
                     if len(connectedClients[i]['Model']) == 0:
@@ -154,6 +166,7 @@ def ready(self):
         return {'status': 200, 'response': 'False'}
 
 
+# Receive result and use client ID and Model ID to assign result to relevant model in population
 def processResult(self):
     global currentPopulation
     global numProcessed
@@ -174,17 +187,17 @@ def processResult(self):
                 for modelNum, model in enumerate(connectedClients[clientNum]['Model']):
                     if model['ModelID'] == modelID:
                         connectedClients[clientNum]['Model'][modelNum]['Result'] = float(result)
-                        #connectedClients[clientNum]['Model'][modelNum]['Processed'] = True
                         del connectedClients[clientNum]['Model'][modelNum]
                         numProcessed += 1
                         leftToProcess -= 1
+                        print(str(numProcessed) + "/" + str(len(currentPopulation)) + " processed...", end="\r")
+                        # Check if all networks been processed
                         if numProcessed == len(currentPopulation):
                             useSamePop = True
                             serverState.value = 2
                             evo_conn.send(currentPopulation)
                             numProcessed = 0
                             leftToProcess = len(currentPopulation)
-
                         else:
                             serverState.value = 1
                         break
@@ -193,6 +206,7 @@ def processResult(self):
         return {'status': 500, 'response': "Couldn't post result"}
 
 
+# HTTP links referencing relavant functions
 getPaths = {
     '/getNewID': newClient
 }
@@ -206,14 +220,15 @@ postPaths = {
 }
 
 
+# HTTP Server handler
+# Processed http requests, formats into usable data as well as simple first line error handling
 class MyHandler(BaseHTTPRequestHandler):
 
     def log_message(self, format, *args):
         return
 
-    def _set_response(self, opts): # This is just a duplicate of handle_http. rewrite this to handle both
+    def _set_response(self, opts):
         self.send_response(opts['status'])
-        # self.send_header('Content-type', 'text/html')
         self.send_header('Content-Type', 'application/json')
         self.end_headers()
         if isinstance(opts['response'], dict):
@@ -225,7 +240,6 @@ class MyHandler(BaseHTTPRequestHandler):
     def do_POST(self):
         if self.path in postPaths:
             # Serve PUT request
-            # print("POST: " + str(self.path))
             self._set_response(postPaths[self.path](self))
         else:
             self._set_response({'status': 404, 'response': 'No such page'})
@@ -233,7 +247,6 @@ class MyHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         if self.path in getPaths:
             # Serve GET request
-            # print("GET: " + str(self.path))
             self._set_response(getPaths[self.path]())
         else:
             # Serve file
@@ -250,23 +263,21 @@ class MyHandler(BaseHTTPRequestHandler):
                 self.send_error(404, 'File Not Found: %s' % self.path)
 
 
-#class ThreadedHTTPServer(ThreadingMixIn, HTTPServer):
-#    '''Nothing here '''
-
-
-def main(evoReady, inputServerState, connection, inputNumClients, maxPop):
+# Setup global variables sent from core
+def main(evoReady, inputServerState, connection, inputNumClients, maxPop, datasetLocation):
     try:
         global evoState
         global serverState
         global evo_conn
         global numClients
+        global datasetInUse
 
+        datasetInUse = datasetLocation
         serverState = inputServerState
         evoState = evoReady
         evo_conn = connection
         numClients = inputNumClients
         server = HTTPServer(('', 9000), MyHandler)
-        #server = ThreadedHTTPServer(('', 9000), MyHandler)
         print('started httpserver...')
         server.serve_forever()
     except KeyboardInterrupt:

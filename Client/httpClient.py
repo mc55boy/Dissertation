@@ -74,7 +74,6 @@ def getModel(myID):
 
 class HTTPHandler:
     def isReady(clientID):
-        # success, response = sendGet("ready")
         dataToSend = json.dumps({'clientID': clientID}).encode('utf-8')
         url = "/ready"
         header = {"Content-type": "application/x-www-form-urlencoded", "Accept": "text/plain"}
@@ -113,7 +112,7 @@ class HTTPHandler:
         return nextModel
 
     def requestData(datasetName):
-        urllib.request.urlretrieve("http://localhost:9000/Data/" + datasetName + ".tar.gz", "Data/MNIST_data.tar.gz")
+        urllib.request.urlretrieve("http://localhost:9000/Data/" + datasetName + ".tar", "Data/" + datasetName + ".tar")
 
     def whichDataset(myID):
         dataToSend = json.dumps({'clientID': myID}).encode('utf-8')

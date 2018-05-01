@@ -3,11 +3,11 @@ import os
 import tarfile
 import netHandler as netHandler
 import time
-import random
 
-
+# ClientID
 myID = None
 
+#Save location for dataset
 datasetLocation = "Data/"
 
 
@@ -16,10 +16,10 @@ def downloadData(datasetName):
     HTTPServices.HTTPHandler.requestData(datasetName)
     print("Data downloaded")
     print("Extracting files...")
-    tar = tarfile.open("Data/" + datasetName + ".tar.gz")
+    tar = tarfile.open("Data/" + datasetName + ".tar")
     tar.extractall(path="Data/")
     tar.close()
-    os.remove("Data/" + datasetName + ".tar.gz")
+    os.remove("Data/" + datasetName + ".tar")
     print("Data Extracted")
 
 
@@ -47,7 +47,6 @@ def clientWait(counter, message):
 
 
 def run():
-
     counter = 0
 
     while True:
@@ -55,6 +54,7 @@ def run():
         if HTTPServices.HTTPHandler.isReady(myID):
             counter = 0
             success, datasetName = HTTPServices.HTTPHandler.whichDataset(myID)
+            print(datasetName)
             if success:
                 datasetLocation = "Data/" + datasetName
                 if not os.path.exists(datasetLocation):
@@ -64,8 +64,6 @@ def run():
                 modelID = netModel['ModelID']
                 parameters = netModel['Model']['Parameters']
                 accuracy = netHandler.neuralNet.multilayerTrain(datasetLocation, modelArch, parameters)
-                #accuracy = random.random()
-                #time.sleep(0.5)
                 response = {"clientID": myID, 'ModelID': modelID, "results": {"accuracy": str(accuracy)}}
                 if HTTPServices.HTTPHandler.sendResults(response):
                     print("Getting next model...")

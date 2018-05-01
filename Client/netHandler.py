@@ -9,22 +9,20 @@ totalDataSet = list()
 lastDataSet = None
 
 
-
+# Load MNIST Dataset from file and convert to numpy array
 def loadMNIST(datasetLocation):
-
+    global totalDataSet
     MNIST_Files = ["train-images.idx3-ubyte", "train-labels.idx1-ubyte", "t10k-images.idx3-ubyte", "t10k-labels.idx1-ubyte"]
     MNIST_Headers = [4, 2, 4, 2]
-    global totalDataSet
     totalDataSet = []
     for datasetNum in range(len(MNIST_Files)):
-        dataLocation = datasetLocation + MNIST_Files[datasetNum]
+        dataLocation = datasetLocation + "/" + MNIST_Files[datasetNum]
         print("Reading " + MNIST_Files[datasetNum] + "...")
         with open(dataLocation, "rb") as f:
             metaData = []
             currData = []
             for i in range(MNIST_Headers[datasetNum]):
                 metaData.append(int.from_bytes(f.read(4), byteorder='big'))
-
             if MNIST_Headers[datasetNum] == 2:
                 numBytes = 1
             else:
@@ -57,10 +55,8 @@ def buildNet(inputNet, inputLayer):
 
     for newLayer_Size in inputNet['structure']['hiddenLayers']:
         # Create new hidden layer
-        # newLayer = tf.placeholder("float", [None, newLayer_Size])
         newLayer = tf.placeholder("float", [None, newLayer_Size])
         # Build weights/connections between prev and new layer
-        # newLayer_Weights = tf.Variable(tf.random_normal([existingLayer_Size, newLayer_Size]))
         newLayer_Weights = tf.Variable(tf.random_normal([existingLayer_Size, newLayer_Size]))
         # Build biases for new layer
         newLayer_Bias = tf.nn.dropout(tf.random_normal([newLayer_Size]), 0.9)

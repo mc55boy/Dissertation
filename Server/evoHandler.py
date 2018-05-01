@@ -6,48 +6,40 @@ import uuid
 from itertools import repeat
 from collections import Sequence
 import csv
-import re
 
+
+# DEAP Proprietary data format
 globICLS = None
-
+# DEAP toolbox
 toolbox = base.Toolbox()
+
 population = list()
 newCreator = True
 
 
-# At the moment all it does is generate a random number of layers filled with neurons
+# Generates a custom individual
 def generateInd(icls, maxLayers, maxNeurons,):
     global globICLS
     globICLS = icls
-    genome = list()
-    # add parameters
+    chromosome = list()
 
     learningRate = random.uniform(0.001, 0.1)
-    training_epochs = random.randint(1, 20)
+    training_epochs = random.randint(1, 100)
     batch_size = random.randint(10, 1000)
 
-    genome.append(learningRate)
-    genome.append(training_epochs)
-    genome.append(batch_size)
-    # add layers
+    # add parameters
+    chromosome.append(learningRate)
+    chromosome.append(training_epochs)
+    chromosome.append(batch_size)
+    # add random number of layers
     numLayers = random.randint(1, maxLayers)
     for _ in range(numLayers):
-        #genome.append(10)
-        genome.append(random.randint(1, maxNeurons))
-    return icls(genome)
+        chromosome.append(random.randint(1, maxNeurons))
+    return icls(chromosome)
 
 
-def transformIntoChrom(pop):
-    global globICLS
-    returnList = list()
-    for ind in pop:
-        ind['Model'] = globICLS(ind['Model'])
-        result = float(ind['Result'])
-        ind['Model'].fitness.value = result
-        returnList.append(ind)
-    return returnList
-
-
+# Read from file and transforms entire population in file into
+# chromoomes
 def readCSV(loadPrevious):
     pop = list()
     with open(loadPrevious, "r") as resultsFile:
@@ -55,10 +47,8 @@ def readCSV(loadPrevious):
         for row in reader:
             for indString in row:
                 model = list()
-                #accuracy = float(indString[:indString.find(',')])
-                #print(accuracy)
+
                 paramString = indString[:indString.find(',[')]
-                #print(paramString)
                 paramStringList = paramString.split(",")
                 accuracy = float(paramStringList[0])
                 model.append(float(paramStringList[1]))
@@ -79,6 +69,7 @@ def readCSV(loadPrevious):
     return pop
 
 
+# Reads CSV file and outputs population of defined size (maxPop)
 def loadPop(loadPrevious, maxPop):
     global population
     global newCreator
@@ -90,15 +81,16 @@ def loadPop(loadPrevious, maxPop):
         globICLS = creator.Individual
         newCreator = False
 
+    # Read entire population from file
     pop = readCSV(loadPrevious)
+    # Convert chromsome into individuals that can be sent to clients
     for ind in pop[len(pop)-maxPop:]:
         newInd = {"Result": ind[0], "Parameters": {"learningRate": ind[1][0], "trainingEpochs": ind[1][1], "batchSize": ind[1][2]}, "Model": ind[1][3], "ModelID": uuid.uuid4().hex}
-        #newInd = creator.Individual(newInd)
-        #newInd.fitness.value = ind[0]
         population.append(newInd)
     return population
 
 
+# Generate new population of defined size using DEAP Library
 def createPop(maxNeurons, maxLayers, maxPop):
     global population
     global newCreator
@@ -120,17 +112,21 @@ def createPop(maxNeurons, maxLayers, maxPop):
                 parameters.append(chrom)
             else:
                 model.append(chrom)
+        # Convert chromsome into individual that be sent to clients
         newInd = {"Result": 0.0, "Parameters": {"learningRate": parameters[0], "trainingEpochs": parameters[1], "batchSize": parameters[2]}, "Model": model, "ModelID": uuid.uuid4().hex}
         population.append(newInd)
     return population
 
 
+# Receive population, perform genetic operations on it and retunr next generation
 def nextGen(pop, maxLayers, mutationRate):
     nextGen = list()
     percentageChange = 15
 
+    # Crossbreed population
     crossbreadPop = crossbreed(pop)
 
+    # Perform muations on all in new crossbread population
     for ind in crossbreadPop:
         mutatedArch, mutatedParams = mutate(ind, percentageChange, maxLayers, mutationRate)
         modelID = uuid.uuid4().hex
@@ -142,6 +138,7 @@ def nextGen(pop, maxLayers, mutationRate):
     return nextGen
 
 
+# Used to return dict key as sorting item for pop list
 def fitnessKey(elem):
     return elem[0]
 
@@ -224,9 +221,8 @@ def crossbreed(pop):
     return offspring
 
 
-# Slightly edited method taken from the DEAP library to handle custom gene
+# Edited method taken from the DEAP library to handle custom gene
 def custMut(individual, low, up, indpb):
-
     size = len(individual)
     if not isinstance(low, Sequence):
         low = repeat(low, size)
@@ -244,10 +240,11 @@ def custMut(individual, low, up, indpb):
                 individual[i] = random.uniform(xl, xu)
             else:
                 individual[i] = random.randint(xl, xu)
-
     return individual,
 
 
+# Mutation operation that mutates individuals genes for the
+# custom chromsome used
 def mutate(chromosome, percChange, maxLayers, mutationRate):
     ind = chromosome
     global globICLS
