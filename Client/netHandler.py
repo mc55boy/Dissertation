@@ -109,7 +109,6 @@ class neuralNet:
 
         inputLayer = tf.placeholder("float", [None, inputSize])
         outputLayer = tf.placeholder("float", [None, outputClassNum])
-        saver, logits = buildNet(netInput, inputLayer)
         #logits = multilayer_perceptron(X)
         # Define loss and optimizer
 
@@ -145,7 +144,6 @@ class neuralNet:
                     # Compute average loss
                     avg_cost += c / total_batch
                     i += batch_size
-                save_path = saver.save(sess, "Models/model.ckpt")
             print("Optimization Finished!")
             end = time.time()
             print("TIME: " + str(end - start))
