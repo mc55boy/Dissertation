@@ -8,6 +8,11 @@ from tqdm import trange
 totalDataSet = list()
 lastDataSet = None
 
+train_x = None
+train_y = None
+test_x = None
+test_y = None
+
 
 # Load MNIST Dataset from file and convert to numpy array
 def loadMNIST(datasetLocation):
@@ -82,21 +87,12 @@ class neuralNet:
         global lastDataSet
         if lastDataSet is None or not lastDataSet == datasetLocation:
             lastDataSet = datasetLocation
+            global train_x, train_y, test_x, test_y
             train_x, train_y, test_x, test_y = loadMNIST(datasetLocation)
-        else:
-            global totalDataSet
-            train_x = np.array(totalDataSet[0], dtype=np.uint8)
-            train_y = np.array(totalDataSet[1], dtype=np.uint8)
-            test_x = np.array(totalDataSet[2], dtype=np.uint8)
-            test_y = np.array(totalDataSet[3], dtype=np.uint8)
 
         learning_rate = parameters["learningRate"]
-        # learning_rate = 0.005
         training_epochs = parameters["trainingEpochs"]
-        # training_epochs = 10
         batch_size = parameters["batchSize"]
-        # batch_size = 100
-        # display_step = 1
         inputSize = netInput["structure"]["inputLayer"]
         outputClassNum = netInput["structure"]["outputLayer"]
 
@@ -109,12 +105,12 @@ class neuralNet:
 
         inputLayer = tf.placeholder("float", [None, inputSize])
         outputLayer = tf.placeholder("float", [None, outputClassNum])
-        #logits = multilayer_perceptron(X)
+        # Create network
+        saver, logits = buildNet(netInput, inputLayer)
         # Define loss and optimizer
 
         loss_op = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=logits, labels=outputLayer))
         optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate)
-        # change "optimizer" potentially to decay learning rate (simulated annealing) in future
         train_op = optimizer.minimize(loss_op)
         # Initializing the variables
         init = tf.global_variables_initializer()
@@ -144,6 +140,7 @@ class neuralNet:
                     # Compute average loss
                     avg_cost += c / total_batch
                     i += batch_size
+                save_path = saver.save(sess, "Models/model.ckpt")
             print("Optimization Finished!")
             end = time.time()
             print("TIME: " + str(end - start))

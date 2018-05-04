@@ -29,10 +29,10 @@ def runServer(threadname, evoState, serverState, evo_conn, numClients, maxPop, d
 
 
 # Create population from either file or from evolutionary creator
-def setupEvo(evoState, datasetInput, server_conn, maxLayers, maxPop, loadPrevious):
+def setupEvo(evoState, datasetInput, server_conn, maxLayers, maxPop, loadPrevious, maxEpoch):
     evoState.value = 0
     if loadPrevious == "None":
-        population = evo.createPop(datasetInput, maxLayers, maxPop)
+        population = evo.createPop(datasetInput, maxLayers, maxPop, maxEpoch)
     else:
         print("Loading architectures from " + loadPrevious)
         returnPop = evo.loadPop(loadPrevious, maxPop)
@@ -67,7 +67,7 @@ def convertToCSV(ind):
 #   - Load from most load file
 #   - Generate new population and start proessing new population
 # This may not be needed anymore as system is more robust
-def checkPopIntegrity(loadPrevious, maxPop, datasetInput, maxLayers):
+def checkPopIntegrity(loadPrevious, maxPop, datasetInput, maxLayers, maxEpoch):
     returnPop = list()
     loadedPop = False
     if os.path.exists(str(maxPop) + "p-" + str(maxLayers) + "l-result.csv"):
@@ -88,7 +88,7 @@ def checkPopIntegrity(loadPrevious, maxPop, datasetInput, maxLayers):
         if not loadedPop:
             print("Loading failed. Restarting system...")
             returnPop.clear()
-            returnPop = evo.createPop(datasetInput, maxLayers, maxPop)
+            returnPop = evo.createPop(datasetInput, maxLayers, maxPop, maxEpoch)
         return returnPop
 
 
@@ -110,11 +110,11 @@ def saveToCSV(maxPop, maxLayers):
 #   - Waits for clients to register
 #   - Waits for clients to process networks
 #   - Prints out most succesful population after mutated pop is processed
-def runEvo(threadname, evoState, serverState, server_conn, numClients, maxPop, maxLayers, loadPrevious, mutationRate):
+def runEvo(threadname, evoState, serverState, server_conn, numClients, maxPop, maxLayers, loadPrevious, mutationRate, maxEpoch):
     global pop
 
     numInput = 784
-    setupEvo(evoState, numInput, server_conn, maxLayers, maxPop, loadPrevious)
+    setupEvo(evoState, numInput, server_conn, maxLayers, maxPop, loadPrevious, maxEpoch)
 
     counter = 0
     printMessage = True
@@ -165,13 +165,13 @@ def runEvo(threadname, evoState, serverState, server_conn, numClients, maxPop, m
                 print("Failure. Deleting pop and loading previous saved state")
                 # Delete bad population
                 pop.clear()
-                pop = checkPopIntegrity(loadPrevious, maxPop, numInput, maxLayers)
+                pop = checkPopIntegrity(loadPrevious, maxPop, numInput, maxLayers, maxEpoch)
                 mutatedPop = evo.nextGen(pop, maxLayers, mutationRate)
                 evoState.value = 1
                 server_conn.send(mutatedPop)
 
 
-def setup(numClients, maxLayers, maxPop, datasetLocation, mutationRate, loadPrevious):
+def setup(numClients, maxLayers, maxPop, datasetLocation, mutationRate, loadPrevious, maxEpoch):
 
     # Set up threading pipe and flags
     server_conn, evo_conn = Pipe()
@@ -180,7 +180,7 @@ def setup(numClients, maxLayers, maxPop, datasetLocation, mutationRate, loadPrev
 
     # Setup threads
     serverThread = Thread(name="Server", target=runServer, args=("ServerThread", evoState, serverState, evo_conn, numClients, maxPop, datasetLocation))
-    evoThread = Thread(name="Evo", target=runEvo, args=("EvoThread", evoState, serverState,  server_conn, numClients, maxPop, maxLayers, loadPrevious, mutationRate))
+    evoThread = Thread(name="Evo", target=runEvo, args=("EvoThread", evoState, serverState,  server_conn, numClients, maxPop, maxLayers, loadPrevious, mutationRate, maxEpoch))
 
     # Start and join threads
     evoThread.start()
@@ -196,14 +196,15 @@ if __name__ == "__main__":
     mutationRate = 0.1
     numClients = 1
     loadPrevious = "None"
+    maxEpoch = 100
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "hl:p:m:c:f:")
+        opts, args = getopt.getopt(sys.argv[1:], "hl:p:e:m:c:f:")
     except getopt.GetoptError:
-        print('core.py -l <Number of Layers> -p <Max Pop> -m <Mutation Rate> -c <Num Clients> -f <Load File>\nDefault:\n - 5 Layers\n - 10 Pop\n - 0.1 Mutation Rate\n - 1 Client\n - New population')
+        print('core.py -l <Number of Layers> -p <Max Pop> -e <Max Epoch> -m <Mutation Rate> -c <Num Clients> -f <Load File>\nDefault:\n - 5 Layers\n - 10 Pop\n - 100 Epochs\n- 0.1 Mutation Rate\n - 1 Client\n - New population')
         sys.exit(2)
     for opt, arg in opts:
         if opt == '-h':
-            print('main.py -i <IP Address of Server> -p <Port to connect to>\nDefault: "localhost:9000"')
+            print('core.py -l <Number of Layers> -p <Max Pop> -e <Max Epoch> -m <Mutation Rate> -c <Num Clients> -f <Load File>\nDefault:\n - 5 Layers\n - 10 Pop\n - 100 Epochs\n - 0.1 Mutation Rate\n - 1 Client\n - New population')
             sys.exit()
         elif opt in ("-l"):
 
@@ -214,9 +215,18 @@ if __name__ == "__main__":
                 sys.exit()
         elif opt in ("-p"):
             if arg.isdigit():
-                maxPop = arg
+                maxPop = int(arg)
+                if maxPop < 2:
+                    print("Max pop must be at least 2 for crossover to work")
+                    sys.exit()
             else:
                 print("Map Pop must be integer")
+                sys.exit()
+        elif opt in ("-e"):
+            if arg.isdigit():
+                maxEpoch = int(arg)
+            else:
+                print("Map Epoch must be integer")
                 sys.exit()
         elif opt in ("-m"):
             try:
@@ -229,7 +239,7 @@ if __name__ == "__main__":
                 sys.exit()
         elif opt in ("-c"):
             if arg.isdigit():
-                numClients = arg
+                numClients = int(arg)
             else:
                 print("Num Clients must be integer")
                 sys.exit()
@@ -238,4 +248,4 @@ if __name__ == "__main__":
                 if not os.path.isfile(loadPrevious):
                     print("File not found. Please check file name and location")
                     sys.exit()
-    setup(numClients, maxLayers, maxPop, datasetLocation, mutationRate, loadPrevious)
+    setup(numClients, maxLayers, maxPop, datasetLocation, mutationRate, loadPrevious, maxEpoch)

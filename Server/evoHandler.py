@@ -18,13 +18,13 @@ newCreator = True
 
 
 # Generates a custom individual
-def generateInd(icls, maxLayers, maxNeurons,):
+def generateInd(icls, maxLayers, maxNeurons, maxEpoch):
     global globICLS
     globICLS = icls
     chromosome = list()
 
     learningRate = random.uniform(0.001, 0.1)
-    training_epochs = random.randint(1, 100)
+    training_epochs = random.randint(1, maxEpoch)
     batch_size = random.randint(10, 1000)
 
     # add parameters
@@ -91,14 +91,14 @@ def loadPop(loadPrevious, maxPop):
 
 
 # Generate new population of defined size using DEAP Library
-def createPop(maxNeurons, maxLayers, maxPop):
+def createPop(maxNeurons, maxLayers, maxPop, maxEpoch):
     global population
     global newCreator
 
     if newCreator:
         creator.create("FitnessMax", base.Fitness, weights=(1.0, ))
         creator.create("Individual", list, fitness=creator.FitnessMax)
-        toolbox.register("individual", generateInd, creator.Individual, maxLayers, maxNeurons)
+        toolbox.register("individual", generateInd, creator.Individual, maxLayers, maxNeurons, maxEpoch)
         toolbox.register("population", tools.initRepeat, list, toolbox.individual)
         newCreator = False
     pop = toolbox.population(maxPop)
