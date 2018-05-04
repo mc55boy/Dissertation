@@ -3,6 +3,8 @@ import os
 import tarfile
 import netHandler as netHandler
 import time
+import sys
+import getopt
 
 # ClientID
 myID = None
@@ -23,10 +25,26 @@ def downloadData(datasetName):
     print("Data Extracted")
 
 
-def setup():
+def setup(argv):
     # Connect to server and register client
+    try:
+        opts, args = getopt.getopt(argv, "hi:p:")
+    except getopt.GetoptError:
+        print('main.py -i <IP Address of Server> -p <Port to connect to>\nDefault: "localhost:9000"')
+        sys.exit(2)
+    serverIP = "localhost"
+    serverPort = "9000"
+    for opt, arg in opts:
+        if opt == '-h':
+            print('main.py -i <IP Address of Server> -p <Port to connect to>\nDefault: "localhost:9000"')
+            sys.exit()
+        elif opt in ("-i"):
+            serverIP = arg
+        elif opt in ("-p"):
+            serverPort = arg
+    serverConnection = serverIP + ":" + serverPort
     global myID
-    success, myID = HTTPServices.HTTPHandler.connectToServer()
+    success, myID = HTTPServices.HTTPHandler.connectToServer(serverConnection)
     if success:
         print("Successfully Registered Client")
         return True
@@ -75,7 +93,8 @@ def run():
             counter = clientWait(counter, "Waiting for server to process new models")
 
 
-if setup():
-    run()
-else:
-    print("Failed to setup client")
+if __name__ == "__main__":
+    if setup(sys.argv[1:]):
+        run()
+    else:
+        print("Failed to setup client")

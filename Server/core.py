@@ -5,6 +5,8 @@ import evoHandler as evo
 import time
 import csv
 import os.path
+import sys
+import getopt
 
 pop = list()
 
@@ -187,11 +189,27 @@ def setup(numClients, maxLayers, maxPop, datasetLocation, mutationRate, loadPrev
     evoThread.join()
 
 
-maxLayers = 5
-maxPop = 10
-datasetLocation = "MNIST_data"
-mutationRate = 0.1
-numClients = 1
-loadPrevious = "None"
+if __name__ == "__main__":
+    maxLayers = 5
+    maxPop = 10
+    datasetLocation = "MNIST_data"
+    mutationRate = 0.1
+    numClients = 1
+    loadPrevious = "None"
+    try:
+        opts, args = getopt.getopt(sys.argv[1:], "hc:l:p:d:m:f:")
+    except getopt.GetoptError:
+        print('main.py -i <IP Address of Server> -p <Port to connect to>\nDefault: "localhost:9000"')
+        sys.exit(2)
+    serverIP = "localhost"
+    serverPort = "9000"
+    for opt, arg in opts:
+        if opt == '-h':
+            print('main.py -i <IP Address of Server> -p <Port to connect to>\nDefault: "localhost:9000"')
+            sys.exit()
+        elif opt in ("-i"):
+            serverIP = arg
+        elif opt in ("-p"):
+            serverPort = arg
 
-setup(numClients, maxLayers, maxPop, datasetLocation, mutationRate, loadPrevious)
+    setup(numClients, maxLayers, maxPop, datasetLocation, mutationRate, loadPrevious)

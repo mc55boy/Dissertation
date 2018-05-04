@@ -3,6 +3,8 @@ import urllib.request
 import json
 import time
 
+serverConnection = "http://localhost:9000/"
+
 
 def httpWait(counter, message):
     b = message + "." * counter
@@ -16,12 +18,13 @@ def httpWait(counter, message):
 
 
 def sendGet(url):
+    global serverConnection
     success = False
     response = None
     counter = 0
     while not success:
         try:
-            httpResponse = urllib.request.urlopen("http://localhost:9000/" + url).read()
+            httpResponse = urllib.request.urlopen("http://" + serverConnection + "/" + url).read()
             response = httpResponse.decode("utf-8")
             success = True
             #return True, response
@@ -33,11 +36,12 @@ def sendGet(url):
 
 
 def sendPost(url, dataToSend, header):
+    global serverConnection
     success = False
     counter = 0
     while not success:
         try:
-            request = urllib.request.Request("http://localhost:9000" + url, data=dataToSend, headers=header)
+            request = urllib.request.Request("http://" + serverConnection + url, data=dataToSend, headers=header)
             response = urllib.request.urlopen(request)
 
             if response.status == 200:
@@ -91,7 +95,10 @@ class HTTPHandler:
         print(response)
         return success
 
-    def connectToServer():
+    def connectToServer(serverConnectionInput):
+        global serverConnection
+        serverConnection = serverConnectionInput
+        print("Connection to " + serverConnection + " ...")
         success, response = sendGet("getNewID")
         if success:
             tempID = response
