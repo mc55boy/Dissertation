@@ -70,8 +70,8 @@ def convertToCSV(ind):
 def checkPopIntegrity(loadPrevious, maxPop, datasetInput, maxLayers):
     returnPop = list()
     loadedPop = False
-    if os.path.exists("result.csv"):
-        returnPop = evo.loadPop("result.csv", maxPop)
+    if os.path.exists(str(maxPop) + "p-" + str(maxLayers) + "l-result.csv"):
+        returnPop = evo.loadPop(str(maxPop) + "p-" + str(maxLayers) + "l-result.csv", maxPop)
         if len(returnPop) == 0:
             if os.path.exists(loadPrevious):
                 print("Results file contains no entries. Attempting to load from original load file...")
@@ -197,19 +197,45 @@ if __name__ == "__main__":
     numClients = 1
     loadPrevious = "None"
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "hc:l:p:d:m:f:")
+        opts, args = getopt.getopt(sys.argv[1:], "hl:p:m:c:f:")
     except getopt.GetoptError:
-        print('main.py -i <IP Address of Server> -p <Port to connect to>\nDefault: "localhost:9000"')
+        print('core.py -l <Number of Layers> -p <Max Pop> -m <Mutation Rate> -c <Num Clients> -f <Load File>\nDefault:\n - 5 Layers\n - 10 Pop\n - 0.1 Mutation Rate\n - 1 Client\n - New population')
         sys.exit(2)
-    serverIP = "localhost"
-    serverPort = "9000"
     for opt, arg in opts:
         if opt == '-h':
             print('main.py -i <IP Address of Server> -p <Port to connect to>\nDefault: "localhost:9000"')
             sys.exit()
-        elif opt in ("-i"):
-            serverIP = arg
-        elif opt in ("-p"):
-            serverPort = arg
+        elif opt in ("-l"):
 
+            if arg.isdigit():
+                maxLayers = int(arg)
+            else:
+                print("Max Layer must be integer")
+                sys.exit()
+        elif opt in ("-p"):
+            if arg.isdigit():
+                maxPop = arg
+            else:
+                print("Map Pop must be integer")
+                sys.exit()
+        elif opt in ("-m"):
+            try:
+                mutationRate = float(arg)
+                if mutationRate > 1.0:
+                    print("Mutatation rate cannot be set to higher than 1.0")
+                    sys.exit()
+            except ValueError:
+                print("Mutation rate must be float. E.g. 0.1")
+                sys.exit()
+        elif opt in ("-c"):
+            if arg.isdigit():
+                numClients = arg
+            else:
+                print("Num Clients must be integer")
+                sys.exit()
+        elif opt in ("-f"):
+                loadPrevious = arg
+                if not os.path.isfile(loadPrevious):
+                    print("File not found. Please check file name and location")
+                    sys.exit()
     setup(numClients, maxLayers, maxPop, datasetLocation, mutationRate, loadPrevious)
